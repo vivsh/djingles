@@ -1,7 +1,7 @@
 
 from contextlib import contextmanager
 import os
-from fabric.api import local, run, env, cd, settings, prefix
+from fabric.api import local, run, env, cd, settings, prefix, lcd
 
 BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
@@ -32,8 +32,13 @@ def push(message=None):
     if message:
         with settings(warn_only=True):
             local("git commit -am '%s'" % message)
-            freeze()
+            # freeze()
     local("git push origin master")
 
 def pypi():
-    local("python setup.py sdist bdist_wininst upload")
+    local("rm -rf dist/* && python setup.py sdist bdist_wheel && twine upload dist/*")
+
+
+def publish(message):
+    push(message)
+    pypi()

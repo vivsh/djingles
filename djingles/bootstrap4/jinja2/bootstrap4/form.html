@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="card"><div class="card-body">
+    {{ bs4_form_start(form, novalidate=True) }}
+
+    {% for field in form_visible_fields(form) %}
+        {{ bs4_field_tag(field) }}
+    {% endfor %}
+        <button class="btn btn-primary">Submit</button>
+    {{ bs4_form_end(form) }}
+    </div></div>
+{% endblock %}

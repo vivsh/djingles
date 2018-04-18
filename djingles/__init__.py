@@ -1,7 +1,5 @@
 
 
-from . import _version
+default_app_config = 'djingles.apps.DjinglesConfig'
 
-__version_info__ = _version.__version_info__
-
-__version__ = _version.__version__
+from ._version import __version__, __version_info__

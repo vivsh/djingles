@@ -12,11 +12,12 @@ with io.open(path.join(base_dir, "README.md")) as f:
     long_description = f.read()
 
 
-with io.open(path.join(base_dir, "djingles/__init__.py")) as f:
+with io.open(path.join(base_dir, "djingles/_version.py")) as f:
     ctx = {}
     exec(f.read(), None, ctx)
     version = ctx['__version__']
 
+print(version)
 
 setup(
     name="djingles",
@@ -41,6 +42,7 @@ setup(
         "jinja2>=2.8",
         "django>=2"
     ],
+    python_requires='>=3',
     include_package_data=True,
     packages=find_packages(),
     entry_points={
