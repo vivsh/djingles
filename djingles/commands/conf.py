@@ -1,4 +1,5 @@
 
+import sys
 import jinja2
 import os
 import getpass
@@ -6,6 +7,11 @@ import shutil
 import re
 import click
 from .main import cli
+
+
+def is_venv():
+    return (hasattr(sys, 'real_prefix') or
+            (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
 
 
 def read_template(file_name, **ctx):
@@ -16,14 +22,16 @@ def read_template(file_name, **ctx):
 
 
 @cli.command()
+@click.argument("name", type=int, required=True)
 @click.option("--port", type=int, required=True)
 @click.option("--host", default="")
 @click.option("--http", default=False)
 @click.option("--threads", default=10)
 @click.option("--processes", default=2)
 @click.option("--env", default="")
-def uwsgi_conf(port, http, host, threads, processes, env):
+def uwsgi_conf(name, port, http, host, threads, processes, env):
     ctx = locals()
+    ctx['venv'] = is_venv()
     content = read_template("uwsgi.ini", **ctx)
     content = re.sub(r'\n+', '\n', content)
     click.echo(content)
@@ -41,6 +49,8 @@ def uwsgi_conf(port, http, host, threads, processes, env):
 @click.option("--group", type=str)
 def uwsgi_service(name, executable, conf, dir, description, before, after, user, group):
     ctx = locals()
+    for key in ("conf", "dir", "executable"):
+        ctx[key] = os.path.realpath(ctx[key])
     content = read_template("uwsgi.service", **ctx)
     content = re.sub(r'\n+', '\n', content)
     click.echo(content)
