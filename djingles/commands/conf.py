@@ -22,7 +22,7 @@ def read_template(file_name, **ctx):
 
 
 @cli.command()
-@click.argument("name", type=int, required=True)
+@click.argument("name", type=str, required=True)
 @click.option("--port", type=int, required=True)
 @click.option("--host", default="")
 @click.option("--http", default=False)
@@ -30,8 +30,13 @@ def read_template(file_name, **ctx):
 @click.option("--processes", default=2)
 @click.option("--env", default="")
 def uwsgi_conf(name, port, http, host, threads, processes, env):
+    cwd = os.getcwd()
+    src = cwd if os.path.basename(cwd) == "src" else os.path.join(cwd, "src")
+    base_dir = os.path.dirname(src)
+    if not base_dir.endswith("/"):
+        base_dir = "%s/" % base_dir
+    venv = is_venv()
     ctx = locals()
-    ctx['venv'] = is_venv()
     content = read_template("uwsgi.ini", **ctx)
     content = re.sub(r'\n+', '\n', content)
     click.echo(content)
