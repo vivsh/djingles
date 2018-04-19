@@ -1,0 +1,22 @@
+[Unit]
+Description={{description or name}}
+{% if before %}
+Before={{before}}
+{% endif %}
+
+{% if after %}
+After={{after}}
+{% endif %}
+
+[Service]
+WorkingDirectory={{dir}}
+ExecStart={{executable}} {{conf}}
+Restart=always
+SyslogIdentifier={{name}}
+User={{user}}
+Group={{group or user}}
+
+
+[Install]
+WantedBy=multi-user.target
+

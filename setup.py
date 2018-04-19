@@ -17,7 +17,6 @@ with io.open(path.join(base_dir, "djingles/_version.py")) as f:
     exec(f.read(), None, ctx)
     version = ctx['__version__']
 
-print(version)
 
 setup(
     name="djingles",
@@ -40,14 +39,16 @@ setup(
     install_requires=[
         "python-dateutil",
         "jinja2>=2.8",
-        "django>=2"
+        "django>=2",
+        "click",
+        "cookiecutter",
     ],
     python_requires='>=3',
     include_package_data=True,
     packages=find_packages(),
     entry_points={
-        # "console_scripts": [
-        #     "ginger_bootstrap_project = ginger.scripts.bootstrap:main"
-        # ]
+        "console_scripts": [
+            "djingles = djingles.commands.main:cli"
+        ]
     }
 )

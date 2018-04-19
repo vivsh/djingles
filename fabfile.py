@@ -13,8 +13,10 @@ DEVELOPMENT_PACKAGES = {
     "fabric"
 }
 
+
 def relative_path(*args):
     return os.path.join(BASE_DIR, *args)
+
 
 def freeze():
     packages = local("pip freeze", capture=True)
@@ -34,6 +36,7 @@ def push(message=None):
             local("git commit -am '%s'" % message)
             # freeze()
     local("git push origin master")
+
 
 def pypi():
     local("rm -rf dist/* && python setup.py sdist bdist_wheel && twine upload dist/*")
