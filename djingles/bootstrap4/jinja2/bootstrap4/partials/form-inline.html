@@ -1,0 +1,10 @@
+
+{{ bs_form_start(form, class="form-inline", data_autosubmit=True, method="get") }}
+
+{% for field in form %}
+    {% if not field.is_hidden %}
+        {{ bs_field(field, layout="inline") }}
+    {% endif %}
+{% endfor %}
+
+{{ bs_form_end(form) }}

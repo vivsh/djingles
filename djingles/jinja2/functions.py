@@ -141,3 +141,8 @@ def form_visible_fields(form):
 def class_is(obj, class_name):
     class_ = obj.__class__
     return class_.__name__ == class_name or any(class_name == b.__name__ for b in inspect.getmro(class_))
+
+
+@jinja2_function()
+def build_links(obj, request, *args, **kwargs):
+    return html.build_links(obj, request, *args, **kwargs)

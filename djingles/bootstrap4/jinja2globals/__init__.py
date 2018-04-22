@@ -48,3 +48,11 @@ def bs4_form_actions(form, submit="Submit", reset=None):
         bs4_form_reset(form, label=reset) if reset else None,
         bs4_form_submit(form, label=submit) if submit else None,
     ]
+
+
+@jinja2_function(mark_safe=True, template="bootstrap4/partials/pagination.html")
+def bs4_pagination(page, request):
+    return {
+        "object": page,
+        "request": request
+    }

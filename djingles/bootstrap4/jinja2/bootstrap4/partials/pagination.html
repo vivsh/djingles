@@ -1,0 +1,23 @@
+<nav aria-label="page navigation">
+<ul class="pagination  justify-content-center">
+    {% if object.has_previous() %}
+        <li class="page-item" aria-label="Previous">
+            <a class="page-link" href="{{ object.previous_link(request).url }}">&laquo;</a>
+        </li>
+    {% endif %}
+
+    {% for link in build_links(object, request) %}
+            {% if not link.is_active %}
+                <li class="page-item"><a class="page-link" href="{{ link.url }}">{{ link.content }}</a></li>
+            {% else %}
+                <li class="page-item active"><span class="page-link">{{ link.content }}</span></li>
+            {% endif %}
+    {% endfor %}
+
+    {% if object.has_next() %}
+        <li aria-label="Next" class="page-item">
+            <a href="{{ object.next_link(request).url }}" class="page-link">&raquo;</a>
+        </li>
+    {% endif %}
+</ul>
+</nav>

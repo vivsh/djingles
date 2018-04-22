@@ -7,12 +7,12 @@ from django.utils import six
 from django import forms
 from django.utils.encoding import force_text
 from djingles.formatters import Formatter
-from djingles.forms.fields import GingerSortField
+from djingles.forms.fields import SortField
 from djingles import utils
 
 
-__all__ = ['ActionFormMixin', 'ActionModelForm', 'ActionForm', 'TableSortField', 'FilterForm',
-           'FilterModelForm', 'FilterFormMixin', 'action_model_factory']
+__all__ = ['ActionFormMixin', 'ActionModelForm', 'ActionForm', 'FilterForm',
+           'FilterModelForm', 'FilterFormMixin', 'action_model_form_factory']
 
 
 class ActionFormMixin(object):
@@ -22,56 +22,31 @@ class ActionFormMixin(object):
     success_message = None
 
     def __init__(self, **kwargs):
-        self.optional_fields = kwargs.pop("optional_fields", set())
-        parent_cls = forms.Form if not isinstance(self, forms.ModelForm) else forms.ModelForm
-        constructor = parent_cls.__init__
-        parent_constructor = super(ActionFormMixin, self).__init__
-        keywords = set(inspect.getargspec(constructor).args)
-        func = lambda a: getattr(a, 'im_func', a)
-        parent_keywords = set(inspect.getargspec(parent_constructor).args) \
-            if func(parent_constructor) is not func(constructor) else set()
-        context = {}
-        for key in kwargs.copy():
-            if key in keywords and key not in parent_keywords:
-                continue
-            value = kwargs.pop(key) if key not in parent_keywords else kwargs.get(key)
-            context[key] = value
+        self.context = kwargs.pop("context", {})
+        self.action = self.context.pop("action", "execute")
+        self.action_method = getattr(self, self.action)
         super(ActionFormMixin, self).__init__(**kwargs)
-        self.context = context
-        prepare = getattr(self, 'prepare_%s' % self.get_action_name(), None)
+        prepare = getattr(self, 'prepare_%s' % self.action, None)
         if prepare is not None:
             prepare()
 
-    def get_action_name(self):
-        return self.context.get("action", "execute")
-
-    def get_action_method(self):
-        func = self.get_action_name() or 'execute'
-        return getattr(self, func)
-
     def __bind_fields(self):
         key = "__bound_with_form"
-        optionals = set(self.optional_fields if self.optional_fields is not None else self.fields.keys())
         for name, field in self.fields.items():
-            if name in optionals:
-                field.required = False
             if hasattr(field, 'bind_form') and not getattr(field, key, False):
                 setattr(field, key, True)
                 field.bind_form(self)
 
-    def process_context(self, func=None):
+    def process_context(self, func):
         context = self.context.copy()
-
         if hasattr(self, "cleaned_data") and hasattr(self, "save"):
             instance = self.save(commit=False)
             context["instance"] = instance
-
         context["data"] = self.cleaned_data
-
-        spec = inspect.getargspec(func or self.get_action_method())
+        spec = inspect.getfullargspec(func)
         if spec.varargs:
             raise ImproperlyConfigured("Form action cannot have variable arguments")
-        if spec.keywords:
+        if spec.varkw:
             return context
         return {k: context[k] for k in spec.args[1:] if k in context}
 
@@ -108,25 +83,24 @@ class ActionFormMixin(object):
 
     @classmethod
     def call(cls, *kwargs):
-        return cls(**kwargs).run()
-
-    def run(self):
-        if not self.is_valid():
-            return False, self.errors
+        form_obj = cls(**kwargs)
+        if not form_obj.is_valid():
+            return False, form_obj.errors
         else:
-            return True, self.result
+            return True, form_obj.result
 
     def full_clean(self):
+        result = None
         self.__bind_fields()
         super(ActionFormMixin, self).full_clean()
         try:
             _ = self.__result
         except AttributeError:
-            result = None
             try:
                 if self.is_bound and not self._errors:
-                    context = self.process_context()
-                    result = self.get_action_method()(**context)
+                    method = self.action_method
+                    context = self.process_context(method)
+                    result = method(**context)
                     result = self.process_result(result)
             except forms.ValidationError as ex:
                 self.add_error(None, ex)
@@ -170,21 +144,41 @@ class ActionModelForm(ActionFormMixin, forms.ModelForm):
     def create(self):
         return self.save()
 
+    def clone(self):
+        self.instance.id = None
+        return self.save()
 
-class FilterFormMixin(ActionFormMixin):
 
-    def __init__(self, queryset, **kwargs):
-        self.queryset = queryset
-        kwargs.setdefault("optional_fields", None)
-        super(FilterFormMixin, self).__init__(**kwargs)
+class FilterFormMixin:
 
-    def perform_action(self):
-        queryset = self.perform_filter()
-        action = self.get_action_method()
-        return action(queryset)
+    def __init__(self, *args, **kwargs):
+        self.context = kwargs.pop("context", {})
+        super(FilterFormMixin, self).__init__(*args, **kwargs)
+        for f in self.fields.values():
+            f.required = False
 
-    def perform_filter(self):
-        queryset = self.queryset
+    def __bind_fields(self):
+        key = "__bound_with_form"
+        for name, field in self.fields.items():
+            if hasattr(field, 'bind_form') and not getattr(field, key, False):
+                setattr(field, key, True)
+                field.bind_form(self)
+
+    @property
+    def sort_field(self):
+        for name, f in self.fields.items():
+            if isinstance(f, SortField):
+                return self[name]
+
+    def generic_filter(self, name, queryset, value, data):
+        kwargs = {}
+        if isinstance(value, (tuple, list)):
+            name = '%s__in' % name
+        kwargs[name] = value
+        return queryset.filter(**kwargs)
+
+    def perform_filter(self, queryset):
+        self.__bind_fields()
         if not self.is_valid():
             return self.invalid_queryset(queryset)
         data = self.cleaned_data
@@ -201,10 +195,7 @@ class FilterFormMixin(ActionFormMixin):
             elif hasattr(field, "filter_queryset"):
                 result = field.filter_queryset(queryset, value, self[name])
             else:
-                if isinstance(value, (tuple,list)):
-                    name = '%s__in' % name
-                kwargs[name] = value
-                result = queryset.filter(**kwargs)
+                result = self.generic_filter(name, queryset, value, data)
             if result is not None:
                 queryset = result
         if hasattr(self, "after_filters"):
@@ -223,35 +214,7 @@ class FilterModelForm(FilterFormMixin, forms.ModelForm):
     pass
 
 
-class TableSortField(GingerSortField):
-
-    def __init__(self, table_class, **kwargs):
-        column_dict = OrderedDict(Formatter.extract_from(table_class))
-        self.reverse = kwargs.pop("reverse", False)
-        choices = [(name, col.label or name.title()) for name, col in six.iteritems(column_dict) if not col.hidden]
-        super(TableSortField, self).__init__(choices=choices, **kwargs)
-        self.table_class = table_class
-
-    def handle_queryset(self, queryset, value, bound_field):
-        text_value = force_text(value) if value is not None else None
-        if not text_value:
-            return queryset
-        reverse = text_value.startswith("-")
-        column_dict = self.table_class.get_column_dict()
-        name = text_value[1:] if reverse else text_value
-        name = self.field_map[name]
-        col = column_dict[name]
-        if not col.sortable:
-            return queryset
-        attr = col.attr or name
-        if col.reverse:
-            reverse = not reverse
-        if reverse:
-            attr = "-%s" % attr
-        return queryset.order_by(attr)
-
-
-def action_model_factory(model_class, include=None, exclude=(), **kwargs):
+def action_model_form_factory(model_class, include=None, exclude=(), **kwargs):
     name = "%sActionForm" % model_class.__name__
     meta = type("Meta", (), {"include": include, "exclude": exclude, "model": model_class})
     kwargs['Meta'] = meta

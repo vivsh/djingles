@@ -1,5 +1,5 @@
-from collections import OrderedDict
 
+from collections import OrderedDict
 from django.core.exceptions import FieldDoesNotExist
 from django.utils import six
 from django.db import models
@@ -25,7 +25,7 @@ FORMATTER_MAPPING = {
 FORMATTER_MAPPING.update(getattr(settings, 'FIELD_FORMATTERS', {}))
 
 
-def get_formatter_for_field(meta, field_map, field_name, options=None):
+def get_formatter_for_field(factory, meta, field_map, field_name, options=None):
     parts = field_name.split("__")
     field_name = parts.pop(0)
     field = field_map.get(field_name)
@@ -35,11 +35,20 @@ def get_formatter_for_field(meta, field_map, field_name, options=None):
         model = field.related_model
         item = parts.pop(0)
         field = model._meta.get_field(item)
+
+    label = field.verbose_name.title()
+    label = getattr(options, 'labels', {}).get(field.name, label)
+
+    if hasattr(factory, "formatter_for_field"):
+        result = factory.formatter_for_field(field)
+        if result is not None:
+            result.label = label
+            return result
     try:
-        return getattr(field, 'get_formatter')()
+        result = getattr(field, 'get_formatter')()
+        result.label = label
+        return result
     except AttributeError:
-        label = field.verbose_name.title()
-        label = getattr(options, 'labels', {}).get(field.name, label)
         if field.choices:
             result = ChoiceFormatter(label=label)
         else:
@@ -47,7 +56,7 @@ def get_formatter_for_field(meta, field_map, field_name, options=None):
         return result
 
 
-def get_formatters_for_model(model_class, fields=None, exclude=None, options=None):
+def get_formatters_for_model(factory, model_class, fields=None, exclude=None, options=None):
     meta = model_class._meta
     field_map = OrderedDict((f.name, f) for f in meta.get_fields() if f.concrete)
     if fields is None:
@@ -55,7 +64,7 @@ def get_formatters_for_model(model_class, fields=None, exclude=None, options=Non
     if exclude:
         exclude = set(exclude)
         fields = filter(lambda f: f not in exclude, fields)
-    result = [(f, get_formatter_for_field(meta, field_map, f, options)) for f in fields]
+    result = [(f, get_formatter_for_field(factory, meta, field_map, f, options)) for f in fields]
     return result
 
 
@@ -68,9 +77,10 @@ class MetaFormattedModel(type):
             return
         model = meta.model
 
-        for name, formatter in get_formatters_for_model(model, fields=getattr(meta, 'fields', None),
+        for name, formatter in get_formatters_for_model(cls, model, fields=getattr(meta, 'fields', None),
                                                         exclude=getattr(meta, 'exclude', None),
                                                         options=meta):
+
             previous = getattr(cls, name, None)
             if not isinstance(previous, Formatter):
                 formatter._update_position()

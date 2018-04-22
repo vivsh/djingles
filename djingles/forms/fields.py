@@ -3,21 +3,23 @@ import re
 import warnings
 import mimetypes
 # import urllib2
+from collections import OrderedDict
+
 from django.utils.encoding import force_text
 from django.utils import six
 import os
-from urllib.request import urlopen
+from urllib.request import build_opener
 from urllib.parse import urlparse
 from django import forms
 from django.core.validators import URLValidator
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from djingles import utils
+from djingles import utils, html
+from djingles.formatters.base import Formatter
 from djingles.utils import feet_inches_to_cm, cm_to_feet_inches
 
 
-__all__ = ["FileOrUrlInput", "HeightField", "HeightWidget", "SortField", "GingerDataSetField", "GingerSortField", 
-           "GingerPageField"]
+__all__ = ["FileOrUrlInput", "HeightField", "HeightWidget", "SortField", "TableSortField"]
 
 
 class FileOrUrlInput(forms.ClearableFileInput):
@@ -33,7 +35,7 @@ class FileOrUrlInput(forms.ClearableFileInput):
         parsed_url = urlparse(url)
         path = parsed_url[2].strip("/")
         name = os.path.basename(path)
-        opener = urllib2.build_opener()
+        opener = build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
         ze_file = opener.open(url).read()
         file_obj = SimpleUploadedFile(name=name, content=ze_file, content_type=mimetypes.guess_type(name))
@@ -89,13 +91,16 @@ class HeightField(forms.MultiValueField):
         return None
 
 
-class GingerSortField(forms.ChoiceField):
+class SortField(forms.ChoiceField):
 
     def __init__(self, choices=(), toggle=True, **kwargs):
         kwargs.setdefault("required", False)
         kwargs.setdefault("widget", forms.HiddenInput)
-        super(GingerSortField, self).__init__(choices=choices, **kwargs)
+        super(SortField, self).__init__(choices=choices, **kwargs)
         self.toggle = toggle
+        self.set_choices(choices)
+
+    def set_choices(self, choices):
         field_map = {}
         new_choices = []
         for i, (value, label) in enumerate(choices):
@@ -110,7 +115,7 @@ class GingerSortField(forms.ChoiceField):
         text_value = force_text(value)
         if text_value.startswith("-"):
             text_value = text_value[1:]
-        return text_value in self.field_map or super(GingerSortField, self).valid_value(text_value)
+        return text_value in self.field_map or super(SortField, self).valid_value(text_value)
 
     def build_links(self, request, bound_field):
         value = bound_field.value()
@@ -124,15 +129,15 @@ class GingerSortField(forms.ChoiceField):
                 next_value = key if text_value.startswith("-") else "-%s" % key
             else:
                 next_value = key
-            url = utils.get_url_with_modified_params(request, {field_name: next_value})
-            yield ui.Link(url=url, content=content, is_active=is_active)
+            url = utils.url_query_update(request.build_absolute_uri(), {field_name: next_value})
+            yield html.Link(url=url, content=content, is_active=is_active)
 
     def invert_sign(self, name, neg):
         if name.startswith("-"):
             neg = not neg
         return "%s%s" % ("-" if neg else "", name.lstrip("-"))
 
-    def handle_queryset(self, queryset, key, bound_field):
+    def filter_queryset(self, queryset, key, bound_field):
         neg = key.startswith("-")
         value = self.field_map[key.lstrip("-")]
         invert = lambda a: self.invert_sign(a, neg)
@@ -145,22 +150,24 @@ class GingerSortField(forms.ChoiceField):
                 return value
 
 
-class GingerDataSetField(GingerSortField):
+class TableSortField(SortField):
 
-    def __init__(self, dataset_class, process_list=False, **kwargs):
-        column_dict = dataset_class.get_column_dict()
-        self.reverse = kwargs.pop("reverse", False)
-        choices = [(name, col.label or name.title()) for name, col in six.iteritems(column_dict) if not col.hidden]
-        super(GingerDataSetField, self).__init__(choices=choices, **kwargs)
-        self.dataset_class = dataset_class
-        self.process_list = process_list
+    def bind_form(self, form):
+        formatter_class = form.context.get('formatter_class')
+        if formatter_class is None:
+            return
+        column_dict = OrderedDict(Formatter.extract_from(formatter_class))
+        choices = [(name, col.label or name.title()) for name, col in column_dict.items()
+                        if col.sortable and not col.hidden]
+        self.column_dict = column_dict
+        self.set_choices(choices)
 
-    def handle_queryset(self, queryset, value, bound_field):
+    def filter_queryset(self, queryset, value, bound_field):
         text_value = force_text(value) if value is not None else None
         if not text_value:
             return queryset
         reverse = text_value.startswith("-")
-        column_dict = self.dataset_class.get_column_dict()
+        column_dict = self.column_dict
         name = text_value[1:] if reverse else text_value
         name = self.field_map[name]
         col = column_dict[name]
@@ -172,23 +179,3 @@ class GingerDataSetField(GingerSortField):
         if reverse:
             attr = "-%s" % attr
         return queryset.order_by(attr)
-
-    def handle_dataset(self, dataset, value, bound_field):
-        text_value = force_text(value) if value is not None else None
-        if not text_value:
-            return
-        reverse = text_value.startswith("-")
-        value = text_value[1:] if reverse else text_value
-        name = self.field_map[value]
-        column = dataset.columns[name]
-        if column.reverse:
-            reverse = not reverse
-        column.sort(reverse=reverse)
-
-
-class SortField(GingerSortField):
-
-    def __init__(self, *args, **kwargs):
-        super(SortField, self).__init__(*args, **kwargs)
-        warnings.warn("Please use GingerSortField instead of SortField", DeprecationWarning)
-

@@ -3,7 +3,7 @@ import inspect
 import copy
 from collections import OrderedDict
 
-# from ginger.nav import Link
+from djingles.html import Link
 from djingles.utils import url_query_update
 
 __all__ = ['Formatter', 'FormattedTable', 'FormattedObject']
@@ -126,6 +126,10 @@ class FormattedObject(object):
         data = self.data = OrderedDict()
         for name, prop in self.__prop_cache.items():
             data[name] = FormattedValue(name, prop, self.source, attrs=self.get_attrs, owner=self)
+
+    def select(self, *names):
+        for name in names:
+            yield self[name]
 
     def __getattr__(self, item):
         return self.__getitem__(item)
@@ -298,27 +302,27 @@ class FooterRow:
 
 class FormattedTable(object):
 
-    def __init__(self, source, sort_key=None, sort_field=None, variant=None, **context):
+    def __init__(self, source, variant=None, **context):
         self.context = context
         self.variant = variant
         self.columns = FormattedTableColumnSet(self, Formatter.extract_from(self.__class__, variant=variant))
         self.source = source
-        self.sort_field = sort_field
-        self.sort_key = sort_key
 
-    def build_links(self, request):
+    def build_links(self, request, bound_field=None):
         data = request.GET
+        sort_key = bound_field.name if bound_field else None
+        sort_field = bound_field.field if bound_field else None
         for col in self.columns.visible_columns():
-            if self.sort_key and self.sort_field:
-                field = self.sort_field
+            if sort_key and sort_field:
+                field = sort_field
                 code = field.get_value_for_name(col.name)
-                value = data.get(self.sort_key, "")
+                value = data.get(sort_key, "")
                 reverse = value.startswith("-")
                 if reverse:
                     value = value[1:]
                 is_active = code == value
                 next_value = "-%s" % code if not reverse and is_active else code
-                mods = {self.sort_key: next_value}
+                mods = {sort_key: next_value}
             else:
                 is_active = False
                 reverse = False

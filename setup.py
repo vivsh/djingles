@@ -41,6 +41,7 @@ setup(
         "jinja2>=2.8",
         "django>=2",
         "click",
+        "djangorestframework",
         "cookiecutter",
     ],
     python_requires='>=3',

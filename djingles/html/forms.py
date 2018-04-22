@@ -1,31 +1,22 @@
-
+from django.forms.boundfield import BoundField
 from django.forms.widgets import CheckboxInput
 import re
+import jinja2
 from collections import namedtuple
 from django.middleware import csrf
 from django.utils import six
 from django.utils.encoding import force_text
 from djingles import utils
-from . import common
+from . import common, links
 
 
-__all__ = ["Choice", "Link", "form_csrf_tag", "form_attrs", "form_css_class",
+__all__ = ["Choice", "form_csrf_tag", "form_attrs", "form_css_class",
            "field_choices", "field_name_range", "field_links", "iter_fields", "widget_css_class",
            "render_widget", "register_layout", "render_field", "field_css_class", "field_range",
-           "render_page", "wrap_csrf_token", "is_selected_choice", "make_css_class"]
+           "wrap_csrf_token", "is_selected_choice", "make_css_class"]
 
 
 Choice = namedtuple("Choice", ["name", "value", "content", "selected"])
-
-
-class Link(object):
-
-    def __init__(self, url, content, is_active=False, **kwargs):
-        self.url = url
-        self.content = content
-        self.is_active = is_active
-        for k in kwargs:
-            setattr(self, k, kwargs[k])
 
 
 _layouts = {}
@@ -68,7 +59,7 @@ def field_links(request, field):
         for code, label in form_field.choices:
             is_active = is_selected_choice(field_value, code)
             link_url = utils.url_query_update(url, {field.name: code})
-            yield Link(link_url, label, is_active, value=code)
+            yield links.Link(link_url, label, is_active, value=code)
 
 
 def form_attrs(form, **kwargs):
@@ -173,25 +164,37 @@ def form_css_class(form):
     return make_css_class(form, "-form")
 
 
-def render_page(request, page, previous="&laquo;", next="&raquo;", **kwargs):
-    # if isinstance(page, GingerDataSet):
-    #     page = page.object_list
-    if page.paginator.num_pages <= 1:
-        return ""
-    H = common
-    nav = H.ul(class_="pagination", **kwargs)
-    if page.has_previous():
-        url = page.previous_link(request).url
-        previous_tag = H.li(aria_label="Previous")[H.a(href=url)[previous]]
-        nav.append(previous_tag)
-    for link in page.build_links(request):
-        if link.is_active:
-            el = H.li(class_="active")[H.span[link.content]]
-        else:
-            el = H.li[H.a(href=link.url)[link.content]]
-        nav.append(el)
-    if page.has_next():
-        url = page.next_link(request).url
-        next_tag = H.li(aria_label="Next")[H.a(href=url)[next]]
-        nav.append(next_tag)
-    return nav.render()
+def bound_field_choices(field):
+    form_field = field.field
+    field_value = field.value()
+    name = field.html_name
+    for code, label in form_field.choices:
+        is_active = is_selected_choice(field_value, code)
+        yield Choice(name, code, label, is_active)
+
+
+def bound_field_link_builder(field, request):
+    url = request.get_full_path()
+    form_field = field.field
+    field_value = field.value()
+    if hasattr(form_field, 'build_links'):
+        for value in form_field.build_links(request, field):
+            yield value
+    else:
+        for code, label in form_field.choices:
+            is_active = is_selected_choice(field_value, code)
+            link_url = utils.url_query_update(url, {field.name: code})
+            yield links.Link(content=label, url=link_url, is_active=is_active, value=code)
+
+
+def choices_to_options(request, bound_field):
+    tags = []
+    for link in links.build_links(bound_field, request):
+        selected = "selected" if link.is_active else ""
+        html = "<option value='%s' %s> %s </option>" % (link.value, selected, link.content)
+        tags.append(html)
+    return jinja2.Markup("".join(tags))
+
+
+links.add_link_builder(BoundField, bound_field_link_builder)
+
