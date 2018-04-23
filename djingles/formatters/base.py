@@ -1,7 +1,7 @@
 
 import inspect
 import copy
-from collections import OrderedDict
+from collections import OrderedDict, deque
 
 from djingles.html import Link
 from djingles.utils import url_query_update
@@ -128,8 +128,13 @@ class FormattedObject(object):
             data[name] = FormattedValue(name, prop, self.source, attrs=self.get_attrs, owner=self)
 
     def select(self, *names):
-        for name in names:
-            yield self[name]
+        stack = deque(names)
+        while stack:
+            item = stack.popleft()
+            if isinstance(item, (list, tuple)):
+                stack.extendleft(reversed(item))
+            else:
+                yield self[item]
 
     def __getattr__(self, item):
         return self.__getitem__(item)

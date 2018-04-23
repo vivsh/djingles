@@ -47,9 +47,6 @@ class CommonView(View, CommonSessionDataMixin):
 
     def process_request(self, request):
         self.user = self.get_user()
-        import time
-        time.sleep(400)
-        return HttpResponseGone()
 
     def process_response(self, request, response):
         return response

@@ -1,3 +1,4 @@
+from django.core.paginator import Page
 
 from djingles.jinja2.functions import form_start, form_end
 from djingles.jinja2 import jinja2_function
@@ -52,7 +53,9 @@ def bs4_form_actions(form, submit="Submit", reset=None):
 
 @jinja2_function(mark_safe=True, template="bootstrap4/partials/pagination.html")
 def bs4_pagination(page, request):
+    num_pages = 0 if not isinstance(page, Page) else page.paginator.num_pages
     return {
+        "num_pages": num_pages,
         "object": page,
         "request": request
     }

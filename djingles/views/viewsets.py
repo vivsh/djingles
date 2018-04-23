@@ -290,7 +290,8 @@ class CommonModelViewSet(ViewSetMixin, CommonFormView):
             self.object_list_formatter = table_formatter_factory(
                 model_class,
                 fields=self.object_list_formatter_fields,
-                get_cell_url=lambda me, cell: self.reverse("detail", object_id=cell.source.id)
+                get_cell_url=lambda me, cell: cell.source.get_absolute_url() if
+                        hasattr(cell.source, 'get_absolute_url') else self.reverse("detail", object_id=cell.source.id)
             )
         return self.object_list_formatter
 

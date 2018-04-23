@@ -1,3 +1,4 @@
+from urllib.parse import urljoin
 
 from django.utils.formats import localize
 from django.utils import timezone
@@ -31,8 +32,9 @@ class FileFormatter(Formatter):
     def format(self, value, name, source):
         if not value:
             return ""
+        from django.conf import settings
         obj = value
-        url = obj.url
+        url = urljoin(settings.MEDIA_URL, obj.url)
         name = obj.name
         tag = "<a href='%s'>%s</a>" % (url, name)
         return tag

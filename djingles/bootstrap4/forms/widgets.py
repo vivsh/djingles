@@ -117,26 +117,26 @@ class CheckboxInput(BootstrapWidget, forms.CheckboxInput):
             ]
 
 
-class Select(BootstrapWidget, forms.Select):
-    input_class = "form-control bootstrap-select-control"
+# class Select(BootstrapWidget, forms.Select):
+#     input_class = "form-control bootstrap-select-control"
 
 
 class SelectMultiple(BootstrapWidget, forms.SelectMultiple):
     input_class = "form-control bootstrap-select-control"
 
 
-class ClearableFileInput(BootstrapWidget, forms.ClearableFileInput):
-    widget_class = "custom-file"
-    input_class = "custom-file-input"
-    label_class = "custom-file-label"
-
-    def render_widget(self, field):
-        widget = field.field.widget
-        css_class = ["form-widget", html.widget_css_class(field), self.widget_class]
-        widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class)
-        content = html.div(class_=css_class)[str(field), self.render_label(field)]
-        result = str(content)
-        return result
+# class ClearableFileInput(BootstrapWidget, forms.ClearableFileInput):
+#     widget_class = "custom-file"
+#     input_class = "custom-file-input"
+#     label_class = "custom-file-label"
+#
+#     def render_widget(self, field):
+#         widget = field.field.widget
+#         css_class = ["form-widget", html.widget_css_class(field), self.widget_class]
+#         widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class)
+#         content = html.div(class_=css_class)[str(field), self.render_label(field)]
+#         result = str(content)
+#         return result
 
 
 class SwitchInput(CheckboxInput):

@@ -23,7 +23,8 @@ class ActionFormMixin(object):
 
     def __init__(self, **kwargs):
         self.context = kwargs.pop("context", {})
-        self.action = self.context.pop("action", "execute")
+        self.action = self.context.get("action", "execute")
+        self.context["action"] = self.action
         self.action_method = getattr(self, self.action)
         super(ActionFormMixin, self).__init__(**kwargs)
         prepare = getattr(self, 'prepare_%s' % self.action, None)
