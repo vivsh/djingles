@@ -29,11 +29,17 @@ def inject_library(env):
         env.filters[key] = func
 
 
+def jinja2_reverse(view_name, **kwargs):
+    extra = kwargs.pop("kwargs", {})
+    kwargs.update(extra)
+    return reverse(view_name, kwargs=kwargs)
+
+
 def environment(**options):
     env = Environment(**options)
     env.globals.update({
         'static': staticfiles_storage.url,
-        'url': reverse,
+        'url': jinja2_reverse,
     })
     inject_filters(env)
     inject_functions(env)
