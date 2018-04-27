@@ -17,7 +17,7 @@ def field_option_tags(field):
 
 
 @jinja2_function(takes_context=True, mark_safe=True)
-def form_hidden_field_tags(context, form, csrf=True):
+def form_hidden_field_tags(context, form, csrf=False):
     request = context["request"]
     fields = []
     if csrf:
@@ -45,7 +45,7 @@ def form_attrs(form, **kwargs):
 
 @jinja2_function(takes_context=True, mark_safe=True)
 def form_start(context, form, **attrs):
-    csrf = attrs.get("method", "post").lower() == "post"
+    csrf = attrs.get("method", "get").lower() == "post"
     attrs = html.form_attrs(form, **attrs)
     form_tag = "<form {}>".format(attrs)
     hidden = form_hidden_field_tags(context, form, csrf=csrf)

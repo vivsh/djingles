@@ -1,8 +1,10 @@
 
 import inspect
 from collections import OrderedDict
+import random
 
 from django.core.exceptions import ImproperlyConfigured
+from django.http.request import QueryDict
 from django.utils import six
 from django import forms
 from django.utils.encoding import force_text
@@ -152,11 +154,32 @@ class ActionModelForm(ActionFormMixin, forms.ModelForm):
 
 class FilterFormMixin:
 
-    def __init__(self, *args, **kwargs):
+    submit_key = "_sk"
+
+    def __init__(self, data=None, *args, **kwargs):
         self.context = kwargs.pop("context", {})
-        super(FilterFormMixin, self).__init__(*args, **kwargs)
+        unbound = False
+        if isinstance(data, dict) and self.submit_key and self.submit_key not in data:
+            unbound = True
+            data = {}
+        super(FilterFormMixin, self).__init__(data=data, *args, **kwargs)
+        self.data = self.initial if unbound else self.data
+        if self.submit_key:
+            self.fields[self.submit_key] = forms.IntegerField(
+                widget=forms.HiddenInput,
+                required=False
+            )
         for f in self.fields.values():
             f.required = False
+
+    def update_data(self, **kwargs):
+        data = self.data.copy()
+        for k, v in kwargs.items():
+            if v is None:
+                data.pop(k, None)
+            else:
+                data[k] = v
+        self.data = data
 
     def __bind_fields(self):
         key = "__bound_with_form"
@@ -205,6 +228,7 @@ class FilterFormMixin:
 
     def invalid_queryset(self, queryset):
         return queryset.none()
+
 
 
 class FilterForm(FilterFormMixin, forms.Form):
