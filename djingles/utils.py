@@ -6,10 +6,10 @@ import os
 import threading
 import re
 import hashlib
+from collections import deque
 import inspect
 import base64
 import pickle
-from django.http.request import HttpRequest
 from django.utils.encoding import force_bytes
 from django.utils import timezone
 from django.db import models
@@ -256,3 +256,11 @@ def feet_inches_to_cm(feet, inches):
     return result
 
 
+def flatten(values):
+    stack = deque(values)
+    while stack:
+        item = stack.popleft()
+        if isinstance(item, (list, tuple)):
+            stack.extendleft(reversed(item))
+        else:
+            yield item

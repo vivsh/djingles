@@ -1,6 +1,8 @@
 
 import functools
 import jinja2
+from django.template.loader import render_to_string
+from djingles import utils
 
 
 class _Library:
@@ -52,3 +54,36 @@ def jinja2_function(template=None, name=None, takes_context=False, mark_safe=Fal
         return orig_func
 
     return closure
+
+
+class MetaJinja2Function(type):
+
+    def __init__(self, name, bases, attrs):
+        super(MetaJinja2Function, self).__init__(name, bases, attrs)
+        self.jinja2_name = utils.camel_to_underscore(name)
+        library.functions[self.jinja2_name] = self.as_function()
+
+
+class Jinja2Function(metaclass=MetaJinja2Function):
+
+    template_name = None
+
+    def get_template_names(self):
+        return [self.template_name]
+
+    def get_context_data(self):
+        return {}
+
+    def render(self):
+        ctx = self.get_context_data()
+        ctx['me'] = self
+        template_names = self.get_template_names()
+        content = render_to_string(template_names, ctx)
+        return jinja2.Markup(content)
+
+    @classmethod
+    def as_function(cls):
+        def func(*args, **kwargs):
+            instance = cls(*args, **kwargs)
+            return instance.render()
+        return func

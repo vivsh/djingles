@@ -22,12 +22,7 @@ class ChoiceFormatter(Formatter):
         return method() if method is not None else None
 
 
-
 class FileFormatter(Formatter):
-
-    def __init__(self, **kwargs):
-        kwargs.setdefault("variants", "detail")
-        super(FileFormatter, self).__init__(**kwargs)
 
     def format(self, value, name, source):
         if not value:

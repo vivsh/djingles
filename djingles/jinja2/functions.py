@@ -146,3 +146,4 @@ def class_is(obj, class_name):
 @jinja2_function()
 def build_links(obj, request, *args, **kwargs):
     return html.build_links(obj, request, *args, **kwargs)
+

@@ -154,10 +154,11 @@ class ActionModelForm(ActionFormMixin, forms.ModelForm):
 
 class FilterFormMixin:
 
-    submit_key = "_sk"
+    submit_key = None
 
     def __init__(self, data=None, *args, **kwargs):
         self.context = kwargs.pop("context", {})
+        self.empty_label = kwargs.pop("empty_label", "--------------")
         unbound = False
         if isinstance(data, dict) and self.submit_key and self.submit_key not in data:
             unbound = True
@@ -170,7 +171,12 @@ class FilterFormMixin:
                 required=False
             )
         for f in self.fields.values():
-            f.required = False
+            if f.required:
+                f.required = False
+                if hasattr(f, "choices"):
+                    choices = list(f.choices)
+                    choices.insert(0, ("", self.empty_label))
+                    f.choices = tuple(choices)
 
     def update_data(self, **kwargs):
         data = self.data.copy()
@@ -209,10 +215,9 @@ class FilterFormMixin:
         allowed = set(self.fields.keys())
         if hasattr(self, "before_filters"):
             queryset = self.before_filters(queryset, data)
-        for name, value in six.iteritems(data):
+        for name, value in data.items():
             if name not in allowed or value in (None, '', [], ()):
                 continue
-            kwargs = {}
             field = self.fields[name]
             if hasattr(self, "filter_%s" % name):
                 result = getattr(self, "filter_%s" % name)(queryset, value, data)

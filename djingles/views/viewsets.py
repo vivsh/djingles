@@ -194,7 +194,6 @@ class ListViewSetMixin(object):
 
     @view(regex="")
     def list(self, request):
-
         object_list_formatter = self.get_object_list_formatter()
 
         object_list = self.filter_queryset(self.get_queryset(), formatter_class=object_list_formatter)
@@ -312,13 +311,17 @@ class CommonModelViewSet(ViewSetMixin, CommonFormView):
             kwargs["context"].update(extra)
             return filter_class(**kwargs)
 
-    def paginate_queryset(self, queryset):
-        if not self.per_page:
+    def paginate_queryset(self, queryset, per_page=None, params_page_key=None):
+        if per_page is None:
+            per_page = self.per_page
+        if params_page_key is None:
+            params_page_key = self.params_page_key
+        if not per_page:
             return queryset
         return self.paginator(
             queryset,
-            per_page=self.per_page,
-            parameter_name=self.params_page_key,
+            per_page=per_page,
+            parameter_name=params_page_key,
             allow_empty=False
         ).page(self.request)
 

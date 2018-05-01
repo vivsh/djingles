@@ -4,10 +4,10 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import reverse
 from jinja2 import Environment
 
-from .library import jinja2_filter, jinja2_function, library
+from .library import jinja2_filter, jinja2_function, library, Jinja2Function
 
 
-__all__ = ['jinja2_filter', 'jinja2_function', 'environment']
+__all__ = ['jinja2_filter', 'jinja2_function', 'environment', 'Jinja2Function']
 
 
 def inject_filters(env):

@@ -4,7 +4,7 @@ import copy
 from collections import OrderedDict, deque
 
 from djingles.html import Link
-from djingles.utils import url_query_update
+from djingles.utils import url_query_update, flatten
 
 __all__ = ['Formatter', 'FormattedTable', 'FormattedObject']
 
@@ -13,20 +13,17 @@ class Formatter(object):
 
     __position = 1
 
-    def __init__(self, label=None, attr=None, hidden=False, sortable=True, variants=None, reverse=False, empty=""):
+    def __init__(self, label=None, attr=None, hidden=False, sortable=True, reverse=False, empty="",
+                 icon=None):
         Formatter.__position += 1
         self.__position = Formatter.__position
         self.label = label
+        self.icon = icon
         self.hidden = hidden
         self.sortable = sortable
         self.reverse = reverse
         self.attr = attr
         self.empty = empty
-        if variants is not None:
-            if not isinstance(variants, (list, tuple)):
-                variants = [variants]
-            variants = set(variants)
-        self.variants = variants
 
     def _update_position(self):
         Formatter.__position += 1
@@ -65,10 +62,13 @@ class Formatter(object):
         return self.format(value, name, source)
 
     @classmethod
-    def extract_from(cls, source, variant=None):
+    def extract_from(cls, source, include=None, exclude=None):
         result = sorted(inspect.getmembers(source, lambda a: isinstance(a, Formatter)),
             key=lambda p: p[1].position)
-        result = [p for p in result if p[1].variants is None or variant in p[1].variants]
+        if include:
+            result = [p for p in result if p[0] in set(include)]
+        if exclude:
+            result = [p for p in result if p[0] not in set(exclude)]
         return result
 
 
@@ -118,10 +118,9 @@ class FormattedValue(object):
 
 class FormattedObject(object):
 
-    def __init__(self, obj, variant=None, **context):
+    def __init__(self, obj, **context):
         self.context = context
-        self.variant = variant
-        self.__prop_cache = OrderedDict((n,p) for (n,p) in Formatter.extract_from(self.__class__, variant=variant) if not p.hidden)
+        self.__prop_cache = OrderedDict((n,p) for (n,p) in Formatter.extract_from(self.__class__) if not p.hidden)
         self.source = obj
         data = self.data = OrderedDict()
         for name, prop in self.__prop_cache.items():
@@ -223,6 +222,16 @@ class FormattedTableColumnSet(object):
     def keys(self):
         return self.columns.keys()
 
+    def remove(self, name):
+        return self.columns.pop(name, None)
+
+    def select(self, names):
+        clone = copy.copy(self)
+        for key in self.columns.keys():
+            if key not in names:
+                clone.columns.pop(key)
+        return clone
+
     def __iter__(self):
         for value in self.columns.values():
             yield value
@@ -307,14 +316,19 @@ class FooterRow:
 
 class FormattedTable(object):
 
-    def __init__(self, source, variant=None, **context):
+    def __init__(self, source, include=None, exclude=None, **context):
         self.context = context
-        self.variant = variant
-        self.columns = FormattedTableColumnSet(self, Formatter.extract_from(self.__class__, variant=variant))
+        self.columns = FormattedTableColumnSet(self, Formatter.extract_from(self.__class__, include=include, exclude=exclude))
         self.source = source
 
+    def select(self, *names):
+        clone = copy.copy(self)
+        names = list(flatten(names))
+        clone.columns = self.columns.select(names)
+        return clone
+
     def build_links(self, request, bound_field=None):
-        data = request.GET
+        data = request.GET if request else {}
         sort_key = bound_field.name if bound_field else None
         sort_field = bound_field.field if bound_field else None
         for col in self.columns.visible_columns():
@@ -332,7 +346,10 @@ class FormattedTable(object):
                 is_active = False
                 reverse = False
                 mods = {}
-            url = url_query_update(request.build_absolute_uri(), mods) if mods else None
+            if request:
+                url = url_query_update(request.build_absolute_uri(), mods) if mods else None
+            else:
+                url = None
             link = Link(content=col.label, url=url, is_active=is_active, reverse=reverse, sortable=col.sortable, column=col)
             yield link
 
