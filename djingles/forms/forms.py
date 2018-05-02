@@ -27,7 +27,7 @@ class ActionFormMixin(object):
         self.context = kwargs.pop("context", {})
         self.action = self.context.get("action", "execute")
         self.context["action"] = self.action
-        self.action_method = getattr(self, self.action)
+        self.action_method = getattr(self, self.action, self.execute)
         super(ActionFormMixin, self).__init__(**kwargs)
         prepare = getattr(self, 'prepare_%s' % self.action, None)
         if prepare is not None:
@@ -123,7 +123,7 @@ class ActionFormMixin(object):
             for f in extras:
                 self.fields[f] = extras[f]
 
-    def execute(self, **kwargs):
+    def execute(self):
         return {}
 
 

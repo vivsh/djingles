@@ -80,7 +80,7 @@ class CommonView(View, CommonSessionDataMixin):
     def get_messages(self):
         return messages.get_messages(self.request)
 
-    def get_previous_url(self, default=None):
+    def get_previous_url(self, default="/"):
         return self.request.META.get("HTTP_REFERER", default)
 
 
