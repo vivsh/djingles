@@ -14,12 +14,14 @@ class Formatter(object):
     __position = 1
 
     def __init__(self, label=None, attr=None, hidden=False, sortable=True, reverse=False, empty="",
-                 icon=None):
+                 icon=None, url=None, editable=False):
         Formatter.__position += 1
         self.__position = Formatter.__position
         self.label = label
         self.icon = icon
+        self.url = url
         self.hidden = hidden
+        self.editable = editable
         self.sortable = sortable
         self.reverse = reverse
         self.attr = attr
@@ -66,7 +68,7 @@ class Formatter(object):
         result = sorted(inspect.getmembers(source, lambda a: isinstance(a, Formatter)),
             key=lambda p: p[1].position)
         if include:
-            result = [p for p in result if p[0] in set(include)]
+            result = [p for p in result if p[0] in list(include)]
         if exclude:
             result = [p for p in result if p[0] not in set(exclude)]
         return result
@@ -82,12 +84,7 @@ class FormattedValue(object):
         self.__owner = owner
 
     def get_absolute_url(self):
-        try:
-            func = self.__owner.get_cell_url
-        except AttributeError:
-            return None
-        else:
-            return func(self)
+        return self.url
 
     @property
     def attrs(self):
@@ -97,6 +94,19 @@ class FormattedValue(object):
     def label(self):
         label = self.prop.label
         return label if label is not None else self.name.replace("_", " ").title()
+
+    @property
+    def url(self):
+        if not self.prop.url:
+            try:
+                func = self.__owner.get_cell_url
+            except AttributeError:
+                return None
+            else:
+                return func(self)
+        if callable(self.prop.url):
+            return self.prop.url(self)
+        return self.prop.url
 
     @property
     def value(self):
@@ -116,16 +126,30 @@ class FormattedValue(object):
         return str(result)
 
 
-class FormattedObject(object):
+class MetaFormattedObject(type):
+
+    def __init__(cls, name, bases, attrs):
+        super(MetaFormattedObject, cls).__init__(name, bases, attrs)
+        cls.base_formatters = tuple((k, v) for k, v in Formatter.extract_from(cls))
+
+    def subset_class(cls, include=None, exclude=None):
+        name = "_Sub%s" % cls.__name__
+        fields = Formatter.extract_from(cls, include=include, exclude=exclude)
+        class_ = type(name, (cls, ), OrderedDict((k, v) for k, v in fields))
+        return class_
+
+
+class FormattedObject(metaclass=MetaFormattedObject):
 
     def __init__(self, obj, **context):
         self.context = context
-        self.__prop_cache = OrderedDict((n,p) for (n,p) in Formatter.extract_from(self.__class__) if not p.hidden)
         self.source = obj
+        self.formatters = OrderedDict((k, v.copy()) for k,v in self.base_formatters)
         data = self.data = OrderedDict()
-        for name, prop in self.__prop_cache.items():
+        for name, prop in self.formatters.items():
             data[name] = FormattedValue(name, prop, self.source, attrs=self.get_attrs, owner=self)
 
+    #This comes useful inside the templates when a single object has to be split into multiple fields
     def select(self, *names):
         stack = deque(names)
         while stack:
@@ -145,11 +169,11 @@ class FormattedObject(object):
             raise AttributeError(item)
 
     def __iter__(self):
-        for name, prop in self.__prop_cache.items():
+        for name, prop in self.formatters.items():
             yield self.data[name]
 
     def __len__(self):
-        return len(self.__prop_cache)
+        return len(self.formatters)
 
     def __bool__(self):
         return len(self) > 0
@@ -210,8 +234,8 @@ class FormattedTableColumn(object):
 
 class FormattedTableColumnSet(object):
 
-    def __init__(self, table, values):
-        self.columns = OrderedDict((n, FormattedTableColumn(n, p, table)) for n,p in values)
+    def __init__(self, table):
+        self.columns = OrderedDict((n, FormattedTableColumn(n, p.copy(), table)) for n, p in table.base_formatters)
 
     def visible_columns(self):
         return [col for col in self.columns.values() if not col.hidden]
@@ -225,7 +249,7 @@ class FormattedTableColumnSet(object):
     def remove(self, name):
         return self.columns.pop(name, None)
 
-    def select(self, names):
+    def select(self, *names):
         clone = copy.copy(self)
         for key in self.columns.keys():
             if key not in names:
@@ -314,11 +338,11 @@ class FooterRow:
         return self.data
 
 
-class FormattedTable(object):
+class FormattedTable(metaclass=MetaFormattedObject):
 
-    def __init__(self, source, include=None, exclude=None, **context):
+    def __init__(self, source, **context):
         self.context = context
-        self.columns = FormattedTableColumnSet(self, Formatter.extract_from(self.__class__, include=include, exclude=exclude))
+        self.columns = FormattedTableColumnSet(self)
         self.source = source
 
     def select(self, *names):

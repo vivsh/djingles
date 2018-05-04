@@ -3,7 +3,8 @@ import inspect
 from collections import OrderedDict
 import random
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
+from django.db.models.fields import CharField, TextField
 from django.http.request import QueryDict
 from django.utils import six
 from django import forms
@@ -170,8 +171,12 @@ class FilterFormMixin:
                 widget=forms.HiddenInput,
                 required=False
             )
-        for f in self.fields.values():
-            if f.required:
+        for key, f in self.fields.items():
+            if f.disabled:
+                continue
+            if isinstance(f, forms.BooleanField):
+                self.fields[key] = forms.NullBooleanField(required=False, label=f.label, help_text=f.help_text)
+            elif f.required:
                 f.required = False
                 if hasattr(f, "choices"):
                     choices = list(f.choices)
@@ -186,6 +191,20 @@ class FilterFormMixin:
             else:
                 data[k] = v
         self.data = data
+
+    @classmethod
+    def subset_class(cls, include=None, exclude=None):
+        name = "_Sub%s" % cls.__name__
+        include = tuple(include) if include is not None else [f for f, _ in cls.base_fields]
+        exclude = set(exclude or ())
+        field_names = [f for f in include if f not in exclude]
+        if hasattr(cls, "Meta"):
+            meta_class = type("Meta", cls.Meta, {"fields": field_names})
+        else:
+            exclude = {}
+            for f, _ in cls.base_fields:
+                exclude[f] = None
+        return type(name, (cls, ), {"Meta": meta_class}, exclude)
 
     def __bind_fields(self):
         key = "__bound_with_form"
@@ -235,13 +254,27 @@ class FilterFormMixin:
         return queryset.none()
 
 
-
 class FilterForm(FilterFormMixin, forms.Form):
     pass
 
 
 class FilterModelForm(FilterFormMixin, forms.ModelForm):
-    pass
+
+    def generic_filter(self, name, queryset, value, data):
+        meta = queryset.model._meta
+        try:
+            field = meta.get_field(name)
+        except FieldDoesNotExist:
+            return super(FilterModelForm, self).generic_filter(name, queryset, value, data)
+        else:
+            op = ""
+            if isinstance(value, (list, dict)):
+                op = "in"
+            elif isinstance(field, (CharField, TextField)):
+                op = "icontains"
+        query = "%s__%s" % (name, op) if op else name
+        kwargs = {query: value}
+        return queryset.filter(**kwargs)
 
 
 def action_model_form_factory(model_class, include=None, exclude=(), **kwargs):

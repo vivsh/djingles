@@ -5,6 +5,7 @@ import mimetypes
 # import urllib2
 from collections import OrderedDict
 
+from django.db.models.query_utils import Q
 from django.utils.encoding import force_text
 from django.utils import six
 import os
@@ -156,9 +157,9 @@ class TableSortField(SortField):
         formatter_class = form.context.get('formatter_class')
         if formatter_class is None:
             return
-        column_dict = OrderedDict(Formatter.extract_from(formatter_class))
+        column_dict = OrderedDict(formatter_class.base_formatters)
         choices = [(name, col.label or name.title()) for name, col in column_dict.items()
-                        if col.sortable and not col.hidden]
+                        if col.sortable]
         self.column_dict = column_dict
         self.set_choices(choices)
 
@@ -180,54 +181,27 @@ class TableSortField(SortField):
             attr = "-%s" % attr
         return queryset.order_by(attr)
 
-#
-# class DataSorter:
-#
-#     def __init__(self, query_key, choices=(), toggle=True):
-#         self.query_key = query_key
-#         self.toggle = toggle
-#         self.choices = ()
-#         self.set_choices(choices)
-#         self.field_map = {}
-#
-#     def set_choices(self, choices):
-#         field_map = {}
-#         new_choices = []
-#         for i, (value, label) in enumerate(choices):
-#             position = str(i)
-#             new_choices.append((position, label))
-#             field_map[position] = re.sub(r'\s+', ' ', value.strip())
-#         self.choices = tuple(new_choices)
-#         self.field_map = field_map
-#
-#     def build_links(self, request):
-#         field_name = self.query_key
-#         value = request.GET.get(field_name)
-#         text_value = force_text(value) if value is not None else None
-#         for k, v in self.choices:
-#             content = force_text(v)
-#             key = force_text(k)
-#             is_active = text_value and text_value == key
-#             if is_active and self.toggle:
-#                 next_value = key if text_value.startswith("-") else "-%s" % key
-#             else:
-#                 next_value = key
-#             url = utils.url_query_update(request.build_absolute_uri(), {field_name: next_value})
-#             yield html.Link(url=url, content=content, is_active=is_active)
-#
-#     def invert_sign(self, name, neg):
-#         if name.startswith("-"):
-#             neg = not neg
-#         return "%s%s" % ("-" if neg else "", name.lstrip("-"))
-#
-#     def sort_queryset(self, queryset, key):
-#         neg = key.startswith("-")
-#         value = self.field_map[key.lstrip("-")]
-#         invert = lambda a: self.invert_sign(a, neg)
-#         values = map(invert, value.split())
-#         return queryset.order_by(*values)
-#
-#     def get_value_for_name(self, name):
-#         for value, key in self.field_map.items():
-#             if name == key:
-#                 return value
+
+class SearchField(forms.CharField):
+
+    def __init__(self, field_names=None, *args, **kwargs):
+        self.search_fields = field_names
+        kwargs.setdefault("required", False)
+        super(SearchField, self).__init__(*args, **kwargs)
+
+    def filter_queryset(self, queryset, value, bound_field):
+        q = Q()
+        search_fields = self.search_fields
+        if search_fields is None:
+            meta = queryset.model._meta
+            from django.db.models import TextField, CharField
+            search_fields = [f.name for f in meta.fields if isinstance(f, (TextField, CharField))]
+        for f in search_fields:
+            op = "icontains"
+            if f.startswith("="):
+                f = f[1:]
+                op = "iexact"
+            key = "%s__%s" % (f, op)
+            q |= Q(**{key: value})
+        return queryset.filter(q).all()
+
