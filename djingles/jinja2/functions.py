@@ -151,3 +151,13 @@ def build_links(obj, request, *args, **kwargs):
 @jinja2_function()
 def now():
     return timezone.now()
+
+
+@jinja2_function()
+def model_verbose_name(obj):
+    return obj._meta.verbose_name.title()
+
+
+@jinja2_function()
+def model_verbose_name_plural(obj):
+    return obj._meta.verbose_name_plural.title()
