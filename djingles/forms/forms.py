@@ -159,6 +159,7 @@ class FilterFormMixin:
 
     def __init__(self, data=None, *args, **kwargs):
         self.context = kwargs.pop("context", {})
+        self.boolean_empty_label = kwargs.pop("boolean_empty_label", "Any")
         self.empty_label = kwargs.pop("empty_label", "--------------")
         unbound = False
         if isinstance(data, dict) and self.submit_key and self.submit_key not in data:
@@ -175,8 +176,12 @@ class FilterFormMixin:
             if f.disabled:
                 continue
             if isinstance(f, forms.BooleanField):
-                self.fields[key] = forms.NullBooleanField(required=False, label=f.label, help_text=f.help_text)
-            elif f.required:
+                field = forms.NullBooleanField(required=False,
+                                          label=f.label, help_text=f.help_text)
+                self.fields[key] = field
+                choices=((1, self.boolean_empty_label),(2, "Yes"), (False, "No"))
+                field.widget.choices = choices
+            if f.required:
                 f.required = False
                 if hasattr(f, "choices"):
                     choices = list(f.choices)
@@ -198,13 +203,14 @@ class FilterFormMixin:
         include = tuple(include) if include is not None else [f for f, _ in cls.base_fields]
         exclude = set(exclude or ())
         field_names = [f for f in include if f not in exclude]
+        attrs = {}
         if hasattr(cls, "Meta"):
-            meta_class = type("Meta", cls.Meta, {"fields": field_names})
+            meta_class = type("Meta", (cls.Meta, ), {"fields": field_names})
+            attrs["Meta"] = meta_class
         else:
-            exclude = {}
             for f, _ in cls.base_fields:
-                exclude[f] = None
-        return type(name, (cls, ), {"Meta": meta_class}, exclude)
+                attrs[f] = None
+        return type(name, (cls, ), attrs)
 
     def __bind_fields(self):
         key = "__bound_with_form"

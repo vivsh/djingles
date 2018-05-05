@@ -5,6 +5,7 @@ from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from djingles.jinja2 import jinja2_function
 from djingles import html
+from django.utils import timezone
 
 
 @jinja2_function(takes_context=True, mark_safe=True)
@@ -147,3 +148,6 @@ def class_is(obj, class_name):
 def build_links(obj, request, *args, **kwargs):
     return html.build_links(obj, request, *args, **kwargs)
 
+@jinja2_function()
+def now():
+    return timezone.now()
