@@ -31,7 +31,7 @@ class FileFormatter(Formatter):
         obj = value
         url = urljoin(settings.MEDIA_URL, obj.url)
         name = obj.name
-        tag = "<a href='%s'>%s</a>" % (url, name)
+        tag = "<a href='%s' target='_blank'>%s</a>" % (url, name)
         return tag
 
 
@@ -111,6 +111,8 @@ class ExternalLinkFormatter(Formatter):
         url = self.url
         if callable(url):
             url = url(value)
+        if not url:
+            return value
         return "<a href='%s' target='_blank'> %s </a>" % (url, value)
 
 
@@ -120,4 +122,6 @@ class LinkFormatter(Formatter):
         url = self.url
         if callable(url):
             url = url(value)
+        if not url:
+            return value
         return "<a href='%s' > %s </a>" % (url, value)
