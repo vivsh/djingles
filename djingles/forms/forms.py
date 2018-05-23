@@ -179,7 +179,7 @@ class FilterFormMixin:
                 field = forms.NullBooleanField(required=False,
                                           label=f.label, help_text=f.help_text)
                 self.fields[key] = field
-                choices=((1, self.boolean_empty_label),(2, "Yes"), (False, "No"))
+                choices=((1, self.boolean_empty_label),(2, "Yes"), (3, "No"))
                 field.widget.choices = choices
             if f.required:
                 f.required = False
