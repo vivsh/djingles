@@ -3,14 +3,12 @@
 from django import forms
 from django.contrib import messages
 from django.forms.models import ModelForm
-from django.http.response import Http404, HttpResponseGone
 from django.shortcuts import redirect
 from django.views.generic.base import TemplateResponseMixin, View
 from djingles import utils, exceptions
 
 
 __all__ = ['CommonView', 'CommonSessionDataMixin', 'CommonTemplateView', 'CommonFormView']
-
 
 
 class CommonSessionDataMixin(object):
@@ -188,7 +186,7 @@ class CommonFormView(CommonTemplateView):
         url = self.get_success_url(form)
         msg = form.get_success_message()
         self.add_message(level=messages.SUCCESS, message=msg)
-        return redirect(url)
+        return redirect(url) if not callable(url) else url(form)
 
     def form_invalid(self, form):
         msg = form.get_failure_message()

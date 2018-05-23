@@ -200,15 +200,15 @@ class FilterFormMixin:
     @classmethod
     def subset_class(cls, include=None, exclude=None):
         name = "_Sub%s" % cls.__name__
-        include = tuple(include) if include is not None else [f for f, _ in cls.base_fields]
+        include = tuple(include) if include is not None else [f for f in cls.base_fields]
         exclude = set(exclude or ())
         field_names = [f for f in include if f not in exclude]
         attrs = {}
         if hasattr(cls, "Meta"):
             meta_class = type("Meta", (cls.Meta, ), {"fields": field_names})
             attrs["Meta"] = meta_class
-        else:
-            for f, _ in cls.base_fields:
+        for f in cls.base_fields:
+            if f not in field_names:
                 attrs[f] = None
         return type(name, (cls, ), attrs)
 

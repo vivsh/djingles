@@ -44,7 +44,6 @@ def view(**kwargs):
     def wrapper(func):
         subview = _SubView(name=func.__name__, **kwargs)
         wrapped = func
-
         if methods:
             def closure(self, request, *args, **kw):
                 if methods and request.method not in methods:
