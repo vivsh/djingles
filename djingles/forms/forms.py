@@ -185,7 +185,8 @@ class FilterFormMixin:
                 f.required = False
                 if hasattr(f, "choices"):
                     choices = list(f.choices)
-                    choices.insert(0, ("", self.empty_label))
+                    if choices and choices[0][0]:
+                        choices.insert(0, ("", self.empty_label))
                     f.choices = tuple(choices)
 
     def update_data(self, **kwargs):
