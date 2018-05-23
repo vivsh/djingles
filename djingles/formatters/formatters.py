@@ -6,7 +6,7 @@ from .base import Formatter
 
 
 __all__ = ['ChoiceFormatter', 'FileFormatter', 'ImageFormatter', 'CallableFormatter',
-           "DecimalFormatter", "Formatter",
+           "DecimalFormatter", "Formatter", 'LinkFormatter', 'ExternalLinkFormatter',
            "DateFormatter", "DateTimeFormatter", "TimeFormatter", "PhoneFormatter", "EmailFormatter"]
 
 
@@ -104,3 +104,20 @@ class PhoneFormatter(Formatter):
     def format(self, value, name, source):
         return "<a href='tel:%s'> %s </a>" % (value, value)
 
+
+class ExternalLinkFormatter(Formatter):
+
+    def format(self, value, name, source):
+        url = self.url
+        if callable(url):
+            url = url(value)
+        return "<a href='%s' target='_blank'> %s </a>" % (url, value)
+
+
+class LinkFormatter(Formatter):
+
+    def format(self, value, name, source):
+        url = self.url
+        if callable(url):
+            url = url(value)
+        return "<a href='%s' > %s </a>" % (url, value)
