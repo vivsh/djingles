@@ -7,7 +7,7 @@ from .base import Formatter
 
 __all__ = ['ChoiceFormatter', 'FileFormatter', 'ImageFormatter', 'CallableFormatter',
            "DecimalFormatter", "Formatter",
-           "DateFormatter", "DateTimeFormatter", "TimeFormatter"]
+           "DateFormatter", "DateTimeFormatter", "TimeFormatter", "PhoneFormatter", "EmailFormatter"]
 
 
 class ChoiceFormatter(Formatter):
@@ -93,4 +93,14 @@ class CallableFormatter(Formatter):
         return self.func(value)
 
 
+class EmailFormatter(Formatter):
+
+    def format(self, value, name, source):
+        return "<a href='mailto:%s' > %s </a>" % (value, value)
+
+
+class PhoneFormatter(Formatter):
+
+    def format(self, value, name, source):
+        return "<a href='tel:%s'> %s </a>" % (value, value)
 

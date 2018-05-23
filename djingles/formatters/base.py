@@ -49,6 +49,8 @@ class Formatter(object):
             func = getattr(owner, method, None)
             if func:
                 return func(source)
+        if self.attr:
+            name = self.attr
         parts = name.split("__")
         result = source
         while parts:
