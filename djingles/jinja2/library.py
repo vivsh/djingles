@@ -2,6 +2,8 @@
 import functools
 import jinja2
 from django.template.loader import render_to_string
+from jinja2.ext import Extension
+
 from djingles import utils
 
 
@@ -10,6 +12,7 @@ class _Library:
     def __init__(self):
         self.functions = {}
         self.filters = {}
+        self.extensions = []
 
 
 library = _Library()
@@ -87,3 +90,14 @@ class Jinja2Function(metaclass=MetaJinja2Function):
             instance = cls(*args, **kwargs)
             return instance.render()
         return func
+
+
+class MetaJinja2Extension(type(Extension)):
+
+    def __init__(self, name, bases, attrs):
+        super().__init__(name, bases, attrs)
+        library.extensions.append(self)
+
+
+class Jinja2Extension(Extension, metaclass=MetaJinja2Extension):
+    pass

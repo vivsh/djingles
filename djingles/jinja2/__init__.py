@@ -5,6 +5,7 @@ from django.urls import reverse
 from jinja2 import Environment
 
 from .library import jinja2_filter, jinja2_function, library, Jinja2Function
+from . import extensions
 
 
 __all__ = ['jinja2_filter', 'jinja2_function', 'environment', 'Jinja2Function']
@@ -36,6 +37,7 @@ def jinja2_reverse(view_name, **kwargs):
 
 
 def environment(**options):
+    options['extensions'] = library.extensions + [extensions.PreExtension, extensions.TableExtension]
     env = Environment(**options)
     env.globals.update({
         'static': staticfiles_storage.url,

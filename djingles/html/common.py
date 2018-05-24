@@ -118,6 +118,13 @@ class HtmlAttr(object):
         if key in {"class"}:
             self.classes.append(value)
         elif key == "style":
+            if isinstance(value, str):
+                result = {}
+                pairs = value.split(";")
+                for p in pairs:
+                    k, v = p.split(":", 1)
+                    result[k] = v
+                value = result
             self.styles.update(value)
         else:
             self.attrs[key] = value
