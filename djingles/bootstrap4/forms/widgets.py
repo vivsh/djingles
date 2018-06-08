@@ -161,7 +161,7 @@ class TimeInput(BootstrapWidget, forms.TimeInput):
 
 
 class DateTimeInput(BootstrapWidget, forms.DateTimeInput):
-    input_type = "datetime"
+    input_type = "datetime-local"
     extra_attrs = {"class": "datetimepicker"}
 
 
