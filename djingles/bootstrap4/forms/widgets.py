@@ -63,7 +63,7 @@ class BootstrapWidget(AbstractThemedWidget):
 
     def render_field(self, field, layout):
         layout_class = "layout-%s" % layout
-        css_classes = [html.field_css_class(field), self.field_class, layout_class]
+        css_classes = ["form-field", html.field_css_class(field), self.field_class, layout_class]
         if field.field.required:
             css_classes.append("required")
         if field.errors:
