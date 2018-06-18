@@ -94,12 +94,19 @@ class HeightField(forms.MultiValueField):
 
 class SortField(forms.ChoiceField):
 
-    def __init__(self, choices=(), toggle=True, **kwargs):
+    def __init__(self, choices=(), toggle=True, modifier=None, **kwargs):
         kwargs.setdefault("required", False)
         kwargs.setdefault("widget", forms.HiddenInput)
         super(SortField, self).__init__(choices=choices, **kwargs)
+        self.modifier = modifier
         self.toggle = toggle
         self.set_choices(choices)
+
+    def __deepcopy__(self, memo):
+        result = super().__deepcopy__(memo)
+        result.toggle = self.toggle
+        result.modifier = self.modifier
+        return result
 
     def set_choices(self, choices):
         field_map = {}
@@ -175,11 +182,13 @@ class TableSortField(SortField):
         if not col.sortable:
             return queryset
         attr = col.attr or name
+        attr = self.modifier(attr) if self.modifier else attr
         if col.reverse:
             reverse = not reverse
         if reverse:
             attr = "-%s" % attr
-        return queryset.order_by(attr)
+        result = queryset.order_by(attr)
+        return result
 
 
 class SearchField(forms.CharField):

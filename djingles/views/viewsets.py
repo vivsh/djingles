@@ -1,6 +1,8 @@
 
 import inspect
 import functools
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse, path
 from django.http.response import Http404, HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import redirect
