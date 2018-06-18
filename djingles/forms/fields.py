@@ -182,10 +182,12 @@ class TableSortField(SortField):
         if not col.sortable:
             return queryset
         attr = col.attr or name
-        attr = self.modifier(attr) if self.modifier else attr
         if col.reverse:
             reverse = not reverse
-        if reverse:
+        if self.modifier:
+            field = utils.get_related_field(queryset.model, attr)
+            attr = self.modifier(attr, reverse, field)
+        elif reverse:
             attr = "-%s" % attr
         result = queryset.order_by(attr)
         return result

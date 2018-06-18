@@ -264,3 +264,14 @@ def flatten(values):
             stack.extendleft(reversed(item))
         else:
             yield item
+
+
+def get_related_field(model, field_name):
+    parts = field_name.split("__")
+    field_name = parts.pop(0)
+    field = model._meta.get_field(field_name)
+    while parts and field.model:
+        model = field.related_model
+        item = parts.pop(0)
+        field = model._meta.get_field(item)
+    return field
