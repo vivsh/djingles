@@ -34,7 +34,13 @@ def get_formatter_for_field(factory, meta, field_map, field_name, options=None):
     while parts and field.model:
         model = field.related_model
         item = parts.pop(0)
-        field = model._meta.get_field(item)
+        try:
+            field = model._meta.get_field(item)
+        except FieldDoesNotExist:
+            if hasattr(field, item):
+                return Formatter()
+            else:
+                raise
 
     label = field.verbose_name.title()
     label = getattr(options, 'labels', {}).get(field.name, label)
