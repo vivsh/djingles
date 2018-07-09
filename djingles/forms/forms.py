@@ -18,6 +18,13 @@ __all__ = ['ActionFormMixin', 'ActionModelForm', 'ActionForm', 'FilterForm',
            'FilterModelForm', 'FilterFormMixin', 'action_model_form_factory']
 
 
+def field_cleaner(*names):
+    def wrapper(func):
+        func.__cleaner__ = names
+        return func
+    return wrapper
+
+
 class ActionFormMixin(object):
 
     confirmation_message = None
@@ -33,6 +40,19 @@ class ActionFormMixin(object):
         prepare = getattr(self, 'prepare_%s' % self.action, None)
         if prepare is not None:
             prepare()
+
+    def clean(self):
+        super().clean()
+        data = self.cleaned_data
+        for name, func in inspect.getmembers(self, inspect.ismethod):
+            if not name.startswith("_"):
+                continue
+            cleaner = getattr(func, "__cleaner__", None)
+            if cleaner:
+                deps = cleaner
+                if all(d for d in deps if d in data):
+                    values = [data[d] for d in deps]
+                    func(*values)
 
     def __bind_fields(self):
         key = "__bound_with_form"
