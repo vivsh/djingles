@@ -15,7 +15,7 @@ from djingles import utils
 
 
 __all__ = ['ActionFormMixin', 'ActionModelForm', 'ActionForm', 'FilterForm',
-           'FilterModelForm', 'FilterFormMixin', 'action_model_form_factory']
+           'FilterModelForm', 'FilterFormMixin', 'action_model_form_factory', 'field_cleaner']
 
 
 def field_cleaner(*names):
