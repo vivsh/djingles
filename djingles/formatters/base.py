@@ -158,8 +158,10 @@ class FormattedObject(metaclass=MetaFormattedObject):
             item = stack.popleft()
             if isinstance(item, (list, tuple)):
                 stack.extendleft(reversed(item))
-            else:
-                yield self[item]
+            elif item in self.formatters:
+                value = self[item]
+                if not value.hidden:
+                    yield self[item]
 
     def __getattr__(self, item):
         return self.__getitem__(item)
