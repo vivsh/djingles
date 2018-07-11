@@ -49,6 +49,32 @@ class BootstrapWidget(AbstractThemedWidget):
             [html.li[err] for err in errors]
         ]
 
+    def get_form_property(self, field, property_name, default=None):
+        form = field.form
+        prop = getattr(form, property_name, None)
+        if prop is not None:
+            if callable(prop):
+                return prop(field.name)
+            else:
+                return prop.get(field.name)
+
+    def wrap_widget(self, field, content, prefix=None, suffix=None):
+        if prefix is None:
+            prefix = self.get_form_property(field, "form_input_prefix")
+        if suffix is None:
+            suffix = self.get_form_property(field, "form_input_suffix")
+        if prefix or suffix:
+            content = html.div(class_="input-group")[
+                html.div(class_="input-group-prepend", if_=prefix is not None)[
+                    html.span(class_="input-group-text")[prefix]
+                ],
+                content,
+                html.div(class_="input-group-append", if_=suffix is not None)[
+                    html.span(class_="input-group-text")[suffix]
+                ]
+            ]
+        return content
+
     def render_widget(self, field, prefix=None, suffix=None):
         widget = field.field.widget
         if isinstance(widget, (forms.TextInput, forms.Textarea, forms.Select)):
@@ -58,15 +84,7 @@ class BootstrapWidget(AbstractThemedWidget):
             css_class = ["form-widget", html.widget_css_class(field), self.widget_class]
             widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class)
             content = html.div(class_=css_class)[str(field)]
-        content = html.div(class_="input-group")[
-            html.div(class_="input-group-prepend", if_=prefix is not None)[
-                html.span(class_="input-group-text")[prefix]
-            ],
-            content,
-            html.div(class_="input-group-append", if_=suffix is not None)[
-                html.span(class_="input-group-text")[suffix]
-            ]
-        ]
+        content = self.wrap_widget(field, content, prefix, suffix)
         result = "%s%s" % (self.render_label(field), str(content))
         return result
 
@@ -119,7 +137,7 @@ class CheckboxInput(BootstrapWidget, forms.CheckboxInput):
     field_class = "form-group form-check"
     input_class = ""
 
-    def render_widget(self, field):
+    def render_widget(self, field, **kwargs):
         if getattr(field, 'layout', None) == 'inline':
             return "%s %s" % (self.render_label(field), str(field))
         else:

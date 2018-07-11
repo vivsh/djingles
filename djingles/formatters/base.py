@@ -1,4 +1,5 @@
 
+from jinja2 import Markup
 import inspect
 import copy
 from collections import OrderedDict, deque
@@ -120,12 +121,21 @@ class FormattedValue(object):
     def __getattr__(self, item):
         return getattr(self.prop, item)
 
+    def wrap_content(self, content):
+        prefix = self.__owner.get_prefix(self.name)
+        if prefix:
+            content = "%s %s" % (prefix, content)
+        suffix = self.__owner.get_suffix(self.name)
+        if suffix:
+            content = "%s %s" % (content, suffix)
+        return Markup(content)
+
     def __str__(self):
         value = self.value
         if value is None:
             return self.prop.empty
         result = self.prop.format(value, self.name, self.source)
-        return str(result)
+        return self.wrap_content(str(result))
 
 
 class MetaFormattedObject(type):
@@ -193,6 +203,12 @@ class FormattedObject(metaclass=MetaFormattedObject):
                 props[key] = value
         name = cls.__name__
         return type("%sTable"%name, (FormattedTable,), props)
+
+    def get_prefix(self, name):
+        return
+
+    def get_suffix(self, name):
+        return
 
 
 class FormattedTableColumn(object):
@@ -416,3 +432,9 @@ class FormattedTable(metaclass=MetaFormattedObject):
 
     def get_footer_rows(self):
         return ()
+
+    def get_prefix(self, name):
+        return
+
+    def get_suffix(self, name):
+        return
