@@ -49,7 +49,7 @@ class BootstrapWidget(AbstractThemedWidget):
             [html.li[err] for err in errors]
         ]
 
-    def render_widget(self, field):
+    def render_widget(self, field, prefix=None, suffix=None):
         widget = field.field.widget
         if isinstance(widget, (forms.TextInput, forms.Textarea, forms.Select)):
             widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class, self.widget_class)
@@ -58,10 +58,23 @@ class BootstrapWidget(AbstractThemedWidget):
             css_class = ["form-widget", html.widget_css_class(field), self.widget_class]
             widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class)
             content = html.div(class_=css_class)[str(field)]
+        content = html.div(class_="input-group")[
+            html.div(class_="input-group-prepend", if_=prefix is not None)[
+                html.span(class_="input-group-text")[prefix]
+            ],
+            content,
+            html.div(class_="input-group-append", if_=suffix is not None)[
+                html.span(class_="input-group-text")[suffix]
+            ]
+        ]
         result = "%s%s" % (self.render_label(field), str(content))
         return result
 
-    def render_field(self, field, layout):
+    def render_field(self, field, layout, **kwargs):
+        prefix = kwargs.pop("prefix", None)
+        suffix = kwargs.pop("suffix", None)
+        for k,v in kwargs.items():
+            setattr(field, k, v)
         layout_class = "layout-%s" % layout
         css_classes = ["form-field", html.field_css_class(field), self.field_class, layout_class]
         if field.field.required:
@@ -74,7 +87,7 @@ class BootstrapWidget(AbstractThemedWidget):
         else:
             help_text = self.render_help(field)
         return html.div(class_=css_classes, title=title)[
-                self.render_widget(field),
+                self.render_widget(field, prefix=prefix, suffix=suffix),
                 help_text,
                 self.render_errors(field)
             ]

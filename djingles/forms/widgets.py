@@ -52,30 +52,32 @@ class AbstractThemedWidget(object):
         return widget
 
     @classmethod
-    def widget_to_html(cls, field):
+    def widget_to_html(cls, field, **kwargs):
         widget = cls.__mutate(field)
         if hasattr(widget, 'render_widget'):
-            return widget.render_widget(field)
+            return widget.render_widget(field, **kwargs)
         else:
             instance = cls()
-            return instance.render_widget(field)
+            return instance.render_widget(field, **kwargs)
 
     @classmethod
-    def field_to_html(cls, field, layout):
+    def field_to_html(cls, field, layout, **kwargs):
         field.layout = layout
         original_widget = field.field.widget
         widget = cls.__mutate(field)
         if hasattr(widget, 'render_field'):
-            return widget.render_field(field, layout)
+            return widget.render_field(field, layout, **kwargs)
         else:
             instance = cls()
-            return instance.render_field(field, layout)
+            return instance.render_field(field, layout, **kwargs)
 
     @classmethod
     def form_attrs(cls, form, **kwargs):
         return kwargs
 
-    def render_field(self, field, layout):
+    def render_field(self, field, layout, **kwargs):
+        for k in kwargs:
+            setattr(field.field, k, kwargs[k])
         return str(field)
 
     def render_widget(self, field):
