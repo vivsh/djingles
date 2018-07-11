@@ -60,6 +60,8 @@ class Formatter(object):
                 result = result[item]
             else:
                 result = getattr(result, item)
+            if result is None:
+                break
         return result
 
     def render(self, name, source, owner):
