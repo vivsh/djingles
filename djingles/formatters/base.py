@@ -132,7 +132,7 @@ class FormattedValue(object):
 
     def __str__(self):
         value = self.value
-        if value is None:
+        if value in {None, ""}:
             return self.prop.empty
         result = self.prop.format(value, self.name, self.source)
         return self.wrap_content(str(result))
