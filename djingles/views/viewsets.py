@@ -183,7 +183,6 @@ class CloneViewSetMixin(object):
     @view(detail=True)
     def clone(self, request):
         self.object = self.get_object()
-        self.object.id = None
         self.success_url = self.reverse("list")
         return self.handle_object_action()
 
