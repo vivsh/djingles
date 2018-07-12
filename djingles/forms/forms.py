@@ -1,4 +1,4 @@
-
+import functools
 import inspect
 from collections import OrderedDict
 import random
@@ -15,14 +15,15 @@ from djingles import utils
 
 
 __all__ = ['ActionFormMixin', 'ActionModelForm', 'ActionForm', 'FilterForm',
-           'FilterModelForm', 'FilterFormMixin', 'action_model_form_factory', 'field_cleaner']
+           'FilterModelForm', 'FilterFormMixin', 'action_model_form_factory']
 
 
-def field_cleaner(*names):
-    def wrapper(func):
-        func.__cleaner__ = names
-        return func
-    return wrapper
+def _find_decorated_methods(form, attribute):
+    for name, func in inspect.getmembers(form, inspect.ismethod):
+        if name.startswith("_"):
+            continue
+        if hasattr(func, attribute):
+            yield func
 
 
 class ActionFormMixin(object):
@@ -41,18 +42,28 @@ class ActionFormMixin(object):
         if prepare is not None:
             prepare()
 
-    def clean(self):
-        super().clean()
-        data = self.cleaned_data
-        for name, func in inspect.getmembers(self, inspect.ismethod):
-            if not name.startswith("_"):
-                continue
-            cleaner = getattr(func, "__cleaner__", None)
-            if cleaner:
-                deps = cleaner
-                if all(d for d in deps if d in data):
-                    values = [data[d] for d in deps]
-                    func(*values)
+    def prepare_if_exists(self, func):
+        spec = inspect.getfullargspec(func)
+        names = [n for n in spec.args if n != "self"]
+        try:
+            args = [self.fields[f] for f in names]
+        except KeyError:
+            pass
+        else:
+            return func(*args)
+
+    def clean_if_exists(self, func):
+        spec = inspect.getfullargspec(func)
+        names = [n for n in spec.args if n != "self"]
+        try:
+            args = [self.cleaned_data[f] for f in names]
+            if any(a is None for a in args):
+                return
+        except KeyError:
+            pass
+        else:
+            print(args, "<<<<<<<<<<<", func)
+            return func(*args)
 
     def __bind_fields(self):
         key = "__bound_with_form"
