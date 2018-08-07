@@ -62,7 +62,6 @@ class ActionFormMixin(object):
         except KeyError:
             pass
         else:
-            print(args, "<<<<<<<<<<<", func)
             return func(*args)
 
     def __bind_fields(self):

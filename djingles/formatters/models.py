@@ -101,7 +101,7 @@ class MetaFormattedModel(MetaFormattedObject):
         for name, formatter in get_formatters_for_model(cls, model, fields=getattr(meta, 'fields', None),
                                                         exclude=getattr(meta, 'exclude', None),
                                                         options=meta):
-            setattr(cls, name, formatter)
+            # setattr(cls, name, formatter)
             base_formatters.append((name, formatter))
         cls.base_formatters = tuple(base_formatters)
 
