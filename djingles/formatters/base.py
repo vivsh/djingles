@@ -228,7 +228,7 @@ class FormattedTableColumn(object):
         return self.prop.label or self.name.capitalize()
 
     def __setattr__(self, key, value):
-        if self.__inited and key not in __dict__:
+        if self.__inited and key not in self.__dict__:
             setattr(self.prop, key, value)
         else:
             self.__dict__[key] = value
