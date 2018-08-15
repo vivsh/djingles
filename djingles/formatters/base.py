@@ -15,7 +15,7 @@ class Formatter(object):
     __position = 1
 
     def __init__(self, label=None, attr=None, hidden=False, sortable=True, reverse=False, empty="",
-                 icon=None, url=None, editable=False):
+                 icon=None, url=None, editable=False, order_by=None):
         Formatter.__position += 1
         self.__position = Formatter.__position
         self.label = label
@@ -27,6 +27,7 @@ class Formatter(object):
         self.reverse = reverse
         self.attr = attr
         self.empty = empty
+        self.order_by = order_by or self.attr
 
     def _update_position(self):
         Formatter.__position += 1

@@ -181,7 +181,7 @@ class TableSortField(SortField):
         col = column_dict[name]
         if not col.sortable:
             return queryset
-        attr = col.attr or name
+        attr = col.order_by or col.attr or name
         if col.reverse:
             reverse = not reverse
         if self.modifier:
