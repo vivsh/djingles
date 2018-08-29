@@ -1,5 +1,4 @@
 from urllib.parse import urljoin
-
 from django.utils.formats import localize
 from django.utils import timezone
 from .base import Formatter
@@ -7,7 +6,8 @@ from .base import Formatter
 
 __all__ = ['ChoiceFormatter', 'FileFormatter', 'ImageFormatter', 'CallableFormatter',
            "DecimalFormatter", "Formatter", 'LinkFormatter', 'ExternalLinkFormatter',
-           "DateFormatter", "DateTimeFormatter", "TimeFormatter", "PhoneFormatter", "EmailFormatter"]
+           "DateFormatter", "DateTimeFormatter",
+           "TimeFormatter", "PhoneFormatter", "EmailFormatter", "IntegerFormatter"]
 
 
 class ChoiceFormatter(Formatter):
@@ -82,6 +82,12 @@ class DecimalFormatter(Formatter):
     def format(self, value, name, source):
         template = "%%.%df" % self.decimal_places
         return template % value
+
+
+class IntegerFormatter(Formatter):
+
+    def format(self, value, name, source):
+        return value
 
 
 class CallableFormatter(Formatter):

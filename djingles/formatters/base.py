@@ -5,6 +5,7 @@ import copy
 from collections import OrderedDict, deque
 
 from djingles.html import Link
+from django.utils.formats import localize
 from djingles.utils import url_query_update, flatten
 
 __all__ = ['Formatter', 'FormattedTable', 'FormattedObject']
@@ -43,6 +44,7 @@ class Formatter(object):
         return self.__position
 
     def format(self, value, name, source):
+        value = localize(value)
         return str(value)
 
     def extract(self, name, source, owner=None):
