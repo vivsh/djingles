@@ -12,8 +12,14 @@ __all__ = ['jinja2_filter', 'jinja2_function', 'environment', 'Jinja2Function']
 
 
 def inject_filters(env):
+    from django.contrib.humanize.templatetags import humanize
     from django.template.defaultfilters import register
+
     for name, func in register.filters.items():
+        if name not in env.filters:
+            env.filters[name] = func
+
+    for name, func in humanize.register.filters.items():
         if name not in env.filters:
             env.filters[name] = func
 
