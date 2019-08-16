@@ -112,6 +112,7 @@ class BootstrapWidget(AbstractThemedWidget):
 
 
 class BooleanInputMixin:
+    
     def render_subwidget_wrapper(self, content):
         el = super().render_subwidget_wrapper(content)
         el = el(class_="form-check")
