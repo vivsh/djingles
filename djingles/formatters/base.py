@@ -91,9 +91,6 @@ class FormattedValue(object):
         self.__attrs = attrs
         self.__owner = owner
 
-    def get_absolute_url(self):
-        return self.url
-
     @property
     def attrs(self):
         return self.__attrs(self) if self.__attrs else {}
@@ -341,9 +338,9 @@ class FooterRow:
     __inited = False
 
     def __init__(self, table, label):
-        self.data = {}
+        data = self.data = {}
         for column in table.columns:
-            self.data[column.name] = None
+            data[column.name] = None
         self.label = label
         self.__inited = True
 
@@ -369,6 +366,7 @@ class FormattedTable(metaclass=MetaFormattedObject):
         self.context = context
         self.columns = FormattedTableColumnSet(self)
         self.source = source
+        self._footer_rows = []
 
     def select(self, *names):
         clone = copy.copy(self)
@@ -406,14 +404,15 @@ class FormattedTable(metaclass=MetaFormattedObject):
     def object_list(self):
         return self.source
 
-    def footer_row(self, label):
+    def create_footer_row(self, label):
         row = FooterRow(self, label)
+        self._footer_rows.append(row)
         return row
 
     @property
     def footer(self):
         index = 0
-        for obj in self.get_footer_rows():
+        for obj in self._footer_rows:
             yield FormattedTableRow(index, obj, self)
             index += 1
 
@@ -434,9 +433,6 @@ class FormattedTable(metaclass=MetaFormattedObject):
 
     def get_cell_attrs(self, cell):
         return {}
-
-    def get_footer_rows(self):
-        return ()
 
     def get_prefix(self, name):
         return

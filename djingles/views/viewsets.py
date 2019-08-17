@@ -113,11 +113,11 @@ class ViewSetMixin:
     @classmethod
     def as_urls(cls, base_name, url_name=None, **kwargs):
         result = []
-        if url_name is None:
-            url_name = base_name
+        # if url_name is None:
+        #     url_name = base_name
         for subview in get_child_views(cls):
             action = subview.name
-            segments = [url_name]
+            segments = [url_name] if url_name else []
             if subview.detail:
                 segments.append("<int:object_id>")
             if subview.regex is not None:
@@ -326,7 +326,7 @@ class CommonModelViewSet(ViewSetMixin, CommonFormView):
         ).page(self.request)
 
     def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
         try:
             obj = queryset.get(pk=self.kwargs[self.url_object_key])
             self.check_object_permissions(obj)

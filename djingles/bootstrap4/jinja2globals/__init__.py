@@ -7,12 +7,12 @@ from djingles.bootstrap4.forms import widgets
 
 
 @jinja2_function()
-def bs4_widget_tag(field, **kwargs):
+def bs4_widget(field, **kwargs):
     return widgets.BootstrapWidget.widget_to_html(field, **kwargs)
 
 
 @jinja2_function()
-def bs4_field_tag(field, layout="stack", **kwargs):
+def bs4_field(field, layout="stack", **kwargs):
     return widgets.BootstrapWidget.field_to_html(field, layout, **kwargs)
 
 

@@ -1,4 +1,5 @@
 
+from jinja2 import Markup
 from django import forms
 from djingles import html
 from djingles.forms.widgets import AbstractThemedWidget, ChoiceWidgetMixin
@@ -6,8 +7,8 @@ from djingles.forms.widgets import AbstractThemedWidget, ChoiceWidgetMixin
 
 class BootstrapWidget(AbstractThemedWidget):
 
-    error_class = "field-error"
-    label_class = "control-label"
+    error_class = "field-errors"
+    label_class = "field-label"
     field_class = "form-group"
     help_class = "help-block"
     failure_class = "has-error"
@@ -75,22 +76,28 @@ class BootstrapWidget(AbstractThemedWidget):
             ]
         return content
 
-    def render_widget(self, field, prefix=None, suffix=None):
+    def render_widget(self, field, prefix=None, suffix=None, hidden=None):
         widget = field.field.widget
+        is_hidden = widget.is_hidden if hidden is None else hidden
         if isinstance(widget, (forms.TextInput, forms.Textarea, forms.Select)):
             widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class, self.widget_class)
             content = str(field)
         else:
             css_class = ["form-widget", html.widget_css_class(field), self.widget_class]
+            if is_hidden:
+                css_class.append("form-widget-hidden")
             widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class)
             content = html.div(class_=css_class)[str(field)]
         content = self.wrap_widget(field, content, prefix, suffix)
         result = "%s%s" % (self.render_label(field), str(content))
-        return result
+        return Markup(result)
 
     def render_field(self, field, layout, **kwargs):
+        widget = field.field.widget
         prefix = kwargs.pop("prefix", None)
         suffix = kwargs.pop("suffix", None)
+        if widget.is_hidden:
+            return self.render_widget(field, prefix=prefix, suffix=suffix, hidden=True)
         for k,v in kwargs.items():
             setattr(field, k, v)
         layout_class = "layout-%s" % layout
@@ -114,13 +121,13 @@ class BootstrapWidget(AbstractThemedWidget):
 class BooleanInputMixin:
 
     def render_subwidget_wrapper(self, content):
-        el = super().render_subwidget_wrapper(content)
+        el = super(BooleanInputMixin, self).render_subwidget_wrapper(content)
         el = el(class_="form-check")
         return el
 
     def render_subwidget(self, code, label, selected, attrs):
         attrs["class"] = html.add_css_class(attrs.get("class", ""), "form-check-input")
-        return super().render_subwidget(code, label, selected, attrs)
+        return super(BooleanInputMixin, self).render_subwidget(code, label, selected, attrs)
 
 
 class RadioSelect(BooleanInputMixin, BootstrapWidget, ChoiceWidgetMixin, forms.RadioSelect):

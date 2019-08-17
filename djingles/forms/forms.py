@@ -192,11 +192,9 @@ class FilterFormMixin:
         self.boolean_empty_label = kwargs.pop("boolean_empty_label", "Any")
         self.empty_label = kwargs.pop("empty_label", "--------------")
         unbound = False
-        if isinstance(data, dict) and self.submit_key and self.submit_key not in data:
-            unbound = True
-            data = {}
+        if not data or (self.submit_key and self.submit_key not in data):
+            data = None
         super(FilterFormMixin, self).__init__(data=data, *args, **kwargs)
-        self.data = self.initial if unbound else self.data
         if self.submit_key:
             self.fields[self.submit_key] = forms.IntegerField(
                 widget=forms.HiddenInput,
@@ -218,30 +216,6 @@ class FilterFormMixin:
                     if choices and choices[0][0]:
                         choices.insert(0, ("", self.empty_label))
                     f.choices = tuple(choices)
-
-    def update_data(self, **kwargs):
-        data = self.data.copy()
-        for k, v in kwargs.items():
-            if v is None:
-                data.pop(k, None)
-            else:
-                data[k] = v
-        self.data = data
-
-    @classmethod
-    def subset_class(cls, include=None, exclude=None):
-        name = "_Sub%s" % cls.__name__
-        include = tuple(include) if include is not None else [f for f in cls.base_fields]
-        exclude = set(exclude or ())
-        field_names = [f for f in include if f not in exclude]
-        attrs = {}
-        if hasattr(cls, "Meta"):
-            meta_class = type("Meta", (cls.Meta, ), {"fields": field_names})
-            attrs["Meta"] = meta_class
-        for f in cls.base_fields:
-            if f not in field_names:
-                attrs[f] = None
-        return type(name, (cls, ), attrs)
 
     def __bind_fields(self):
         key = "__bound_with_form"
@@ -265,9 +239,12 @@ class FilterFormMixin:
 
     def perform_filter(self, queryset):
         self.__bind_fields()
-        if not self.is_valid():
-            return self.invalid_queryset(queryset)
-        data = self.cleaned_data
+        if not self.is_bound:
+            data = {k: self.get_initial_for_field(f, k) for k, f in self.fields.items()}
+        else:
+            if not self.is_valid():
+                return self.invalid_queryset(queryset)
+            data = self.cleaned_data
         allowed = set(self.fields.keys())
         if hasattr(self, "before_filters"):
             queryset = self.before_filters(queryset, data)
