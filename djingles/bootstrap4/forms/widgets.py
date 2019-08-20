@@ -76,20 +76,24 @@ class BootstrapWidget(AbstractThemedWidget):
             ]
         return content
 
-    def render_widget(self, field, prefix=None, suffix=None, hidden=None):
+    def render_widget(self, field, prefix=None, suffix=None, hidden=None, form=None):
         widget = field.field.widget
         is_hidden = widget.is_hidden if hidden is None else hidden
         if isinstance(widget, (forms.TextInput, forms.Textarea, forms.Select)):
             widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class, self.widget_class)
+            if form:
+                widget.attrs['form'] = form
             content = str(field)
         else:
             css_class = ["form-widget", html.widget_css_class(field), self.widget_class]
             if is_hidden:
                 css_class.append("form-widget-hidden")
             widget.attrs["class"] = html.add_css_class(widget.attrs.get("class"), self.input_class)
+            if form:
+                widget.attrs['form'] = form
             content = html.div(class_=css_class)[str(field)]
         content = self.wrap_widget(field, content, prefix, suffix)
-        result = "%s%s" % (self.render_label(field), str(content))
+        result = str(content)
         return Markup(result)
 
     def render_field(self, field, layout, **kwargs):
@@ -112,6 +116,7 @@ class BootstrapWidget(AbstractThemedWidget):
         else:
             help_text = self.render_help(field)
         return html.div(class_=css_classes, title=title)[
+                self.render_label(field),
                 self.render_widget(field, prefix=prefix, suffix=suffix),
                 help_text,
                 self.render_errors(field)
