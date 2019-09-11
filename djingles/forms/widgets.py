@@ -121,7 +121,7 @@ class ChoiceWidgetMixin(object):
     def render_wrapper(self, content, attrs):
         return html.ul(**attrs)[content].render()
 
-    def render(self, name, value, attrs=None, choices=()):
+    def render(self, name, value, attrs=None, choices=(), **kwargs):
         if value is None:
             value = ''
         attrs = self.build_attrs(attrs, self.attrs)

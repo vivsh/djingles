@@ -132,12 +132,18 @@ class FormattedValue(object):
             content = "%s %s" % (content, suffix)
         return Markup(content)
 
-    def __str__(self):
+    def to_html(self):
+        return self.wrap_content(self.to_str)
+
+    def to_str(self):
         value = self.value
         if value is None or value == "":
             return self.prop.empty
         result = self.prop.format(value, self.name, self.source)
-        return self.wrap_content(str(result))
+        return str(result)
+
+    def __str__(self):
+        return self.to_str()
 
 
 class MetaFormattedObject(type):
@@ -162,6 +168,9 @@ class FormattedObject(metaclass=MetaFormattedObject):
         data = self.data = OrderedDict()
         for name, prop in self.formatters.items():
             data[name] = FormattedValue(name, prop, self.source, attrs=self.get_attrs, owner=self)
+
+    def to_dict(self):
+        return {c.name: str(c) for c in self}
 
     #This comes useful inside the templates when a single object has to be split into multiple fields
     def select(self, *names):
