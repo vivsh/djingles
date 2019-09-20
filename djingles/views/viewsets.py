@@ -111,11 +111,17 @@ class ViewSetMixin:
         return response
 
     @classmethod
+    def get_action_list(cls):
+        for name, func in inspect.getmembers(cls):
+            if callable(func) and hasattr(func, '__subview__'):
+                yield func.__subview__
+
+    @classmethod
     def as_urls(cls, base_name, url_name=None, **kwargs):
         result = []
         # if url_name is None:
         #     url_name = base_name
-        for subview in get_child_views(cls):
+        for subview in cls.get_action_list():
             action = subview.name
             segments = [url_name] if url_name else []
             if subview.detail:

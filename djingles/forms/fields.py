@@ -171,6 +171,7 @@ class TableSortField(SortField):
         self.set_choices(choices)
 
     def filter_queryset(self, queryset, value, bound_field):
+        print(">>>>>>>>>>>>>", value)
         text_value = force_text(value) if value is not None else None
         if not text_value:
             return queryset
