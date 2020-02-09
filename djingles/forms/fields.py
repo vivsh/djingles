@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 from django.db.models.query_utils import Q
 from django.utils.encoding import force_text
-from django.utils import six
 import os
 from urllib.request import build_opener
 from urllib.parse import urlparse
@@ -46,7 +45,7 @@ class FileOrUrlInput(forms.ClearableFileInput):
     def value_from_datadict(self, data, files, name):
         if name in data and name not in files:
             url = forms.HiddenInput().value_from_datadict(data, files, name)
-            result = self.download_url(name, url) if url and isinstance(url, six.string_types) else None
+            result = self.download_url(name, url) if url and isinstance(url, str) else None
             files = files.copy() if files else {}
             files[name] = result
         return super(FileOrUrlInput, self).value_from_datadict(data, files, name)
@@ -153,7 +152,7 @@ class SortField(forms.ChoiceField):
         return queryset.order_by(*values)
 
     def get_value_for_name(self, name):
-        for value, key in six.iteritems(self.field_map):
+        for value, key in self.field_map.items():
             if name == key:
                 return value
 

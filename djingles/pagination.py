@@ -1,5 +1,5 @@
+
 from django.http.request import HttpRequest
-from django.utils import six
 from django.core.paginator import Page as DjangoPage, Paginator as DjangoPaginator, EmptyPage, PageNotAnInteger
 
 from djingles import utils
@@ -14,7 +14,7 @@ class Page(DjangoPage):
     def create_link(self, request, number):
         param = self.paginator.parameter_name
         url = utils.url_query_update(request.build_absolute_uri(), {param: number})
-        return html.Link(url=url, content=six.text_type(number), is_active=number==self.number)
+        return html.Link(url=url, content=str(number), is_active=number==self.number)
 
     def build_links(self, request):
         for i in utils.page_number_range(self.number,

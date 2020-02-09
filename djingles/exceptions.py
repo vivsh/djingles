@@ -1,8 +1,4 @@
 
-try:
-    from django.utils import six
-except ImportError:
-    import six
 
 from django.urls import reverse
 from django.conf import settings

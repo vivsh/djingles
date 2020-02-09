@@ -1,7 +1,6 @@
 
 from collections import OrderedDict
 from django.core.exceptions import FieldDoesNotExist
-from django.utils import six
 from django.db import models
 from .formatters import *
 from .base import FormattedObject, FormattedTable, MetaFormattedObject
@@ -119,13 +118,12 @@ class MetaFormattedModel(MetaFormattedObject):
 class _SubsetMixin:
     pass
 
-@six.add_metaclass(MetaFormattedModel)
-class FormattedModel(_SubsetMixin, FormattedObject):
+
+class FormattedModel(_SubsetMixin, FormattedObject, metaclass=MetaFormattedModel):
     pass
 
 
-@six.add_metaclass(MetaFormattedModel)
-class FormattedModelTable(_SubsetMixin, FormattedTable):
+class FormattedModelTable(_SubsetMixin, FormattedTable, metaclass=MetaFormattedModel):
     pass
 
 

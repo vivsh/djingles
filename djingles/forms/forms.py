@@ -6,7 +6,6 @@ import random
 from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
 from django.db.models.fields import CharField, TextField
 from django.http.request import QueryDict
-from django.utils import six
 from django import forms
 from django.utils.encoding import force_text
 from djingles.formatters import Formatter

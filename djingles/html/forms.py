@@ -1,10 +1,10 @@
+
 from django.forms.boundfield import BoundField
 from django.forms.widgets import CheckboxInput
 import re
 import jinja2
 from collections import namedtuple
 from django.middleware import csrf
-from django.utils import six
 from django.utils.encoding import force_text
 from djingles import utils
 from . import common, links
@@ -66,7 +66,7 @@ def form_attrs(form, **kwargs):
     attrs = kwargs
     attrs.setdefault("method", "post")
     classes = attrs.pop("class", "")
-    if isinstance(classes, six.string_types):
+    if isinstance(classes, str):
         classes = classes.split(" ")
     classes.append(form_css_class(form))
     attrs["class"] = classes
@@ -94,12 +94,12 @@ def field_name_range(form, first, last, step=None, field_names=None):
     if field_names is None:
         field_names = list(form.fields.keys())
     keys = field_names
-    if first is not None and isinstance(first, six.string_types):
+    if first is not None and isinstance(first, str):
         try:
             first = keys.index(first)
         except ValueError:
             raise KeyError("%r is not a field for form %r" % (first, form.__class__.__name__))
-    if last is not None and isinstance(last, six.string_types):
+    if last is not None and isinstance(last, str):
         try:
             last = keys.index(last)-1
         except ValueError:

@@ -309,6 +309,8 @@ class FormattedTableColumnSet(object):
 
 class FormattedTableRow(object):
 
+    is_footer = False
+
     def __init__(self, index, source, table, kind=None):
         self.index = index
         self.source = source
@@ -345,6 +347,7 @@ class FormattedTableRow(object):
 class FooterRow:
 
     __inited = False
+    is_footer = True
 
     def __init__(self, table, label):
         data = self.data = {}
