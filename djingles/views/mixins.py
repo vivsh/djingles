@@ -24,7 +24,7 @@ class LoginRequiredMixin(object):
 
     def get_user(self):
         user = super(LoginRequiredMixin, self).get_user()
-        if not user.is_authenticated():
+        if not user.is_authenticated:
             raise LoginRequired
         return user
 

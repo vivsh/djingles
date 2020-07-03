@@ -62,7 +62,7 @@ class PermissionRequired(Redirect):
 class LoginRequired(PermissionRequired):
 
     def __init__(self, message=None):
-        url = reverse("login")
+        url = reverse(settings.LOGIN_URL)
         super(LoginRequired, self).__init__(url, message=message)
 
     def create_url(self, request):
