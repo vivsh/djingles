@@ -66,6 +66,8 @@ class CommonView(View, CommonSessionDataMixin):
         return response
 
     def get_context_data(self, **kwargs):
+        kwargs.setdefault("request", self.request)
+        kwargs.setdefault("user", self.request.user)
         if 'view' not in kwargs:
             kwargs['view'] = self
         return kwargs
