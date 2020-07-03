@@ -91,7 +91,9 @@ class ViewSetMixin:
 
     def get_template_names(self):
         template_name = self.template_name
-        return [template_name.format(action=self.action)]
+        if not isinstance(template_name, (list, tuple)):
+            template_name = [template_name]
+        return [t.format(action=self.action) for t in template_name]
 
     def reverse(self, action_name, **kwargs):
         url_name = "%s_%s" % (self.base_name, action_name)
