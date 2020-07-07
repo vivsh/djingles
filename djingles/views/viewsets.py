@@ -266,7 +266,7 @@ class CommonModelViewSet(ViewSetMixin, CommonFormView):
         return super(CommonModelViewSet, self).render_to_response(self.extra_context, **response_kwargs)
 
     def get_queryset(self):
-        return self.queryset
+        return self.queryset.all()
 
     def filter_queryset(self, queryset, **kwargs):
         self.filter_form = self.get_filter_form(**kwargs)
