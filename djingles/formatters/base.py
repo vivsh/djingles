@@ -191,7 +191,7 @@ class FormattedObject(metaclass=MetaFormattedObject):
         try:
             return self.data[item]
         except KeyError:
-            raise AttributeError(item)
+            raise AttributeError(f"Error in accessing {item} of {self.source}")
 
     def __iter__(self):
         for name, prop in self.formatters.items():
@@ -425,7 +425,8 @@ class FormattedTable(metaclass=MetaFormattedObject):
     def footer(self):
         index = 0
         for obj in self._footer_rows:
-            yield FormattedTableRow(index, obj, self)
+            f = FormattedTableRow(index, obj, self)
+            yield f
             index += 1
 
     def __iter__(self):
