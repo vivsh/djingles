@@ -202,7 +202,7 @@ class FilterFormMixin:
         for key, f in self.fields.items():
             if f.disabled:
                 continue
-            if isinstance(f, forms.BooleanField):
+            if isinstance(f, forms.BooleanField) and not isinstance(f, forms.NullBooleanField):
                 field = forms.NullBooleanField(required=False,
                                           label=f.label, help_text=f.help_text)
                 self.fields[key] = field
