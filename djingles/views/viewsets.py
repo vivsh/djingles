@@ -222,7 +222,6 @@ class ListViewSetMixin(object):
         ctx[self.context_object_list_key] = object_list
 
         ctx['filter_form'] = self.filter_form
-
         return self.render_to_response(self.get_context_data(**ctx))
 
 

@@ -1,5 +1,6 @@
 
 from django.utils.encoding import force_text
+from django.forms.models import ModelChoiceIteratorValue
 import re
 import json
 from jinja2 import Markup
@@ -151,6 +152,8 @@ class HtmlAttr(object):
             if value is True:
                 pairs.append(key)
             else:
+                if isinstance(value, ModelChoiceIteratorValue):
+                    value = value.value
                 if not isinstance(value, (str, bytes)):
                     value = html_json(value)
                 pairs.append("%s='%s'" % (key, str(value)))

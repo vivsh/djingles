@@ -39,7 +39,7 @@ setup(
     install_requires=[
         "python-dateutil",
         "jinja2>=2.8",
-        "django>=2",
+        "django>=3",
         "click",
         "djangorestframework",
         "cookiecutter",
