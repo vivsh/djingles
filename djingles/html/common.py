@@ -11,10 +11,6 @@ __all__ = ['html_json', 'html_attrs', "Element", "CssClassList", "CssStyle", 'ad
 
 def html_json(values):
     content = json.dumps(values)
-    try:
-        content = content.encode("unicode-escape")
-    except LookupError:
-        content = content.encode("string-escape")
     return Markup(content)
 
 

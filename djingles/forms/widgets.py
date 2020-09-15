@@ -125,6 +125,7 @@ class ChoiceWidgetMixin(object):
         if value is None:
             value = ''
         attrs = self.build_attrs(attrs, self.attrs)
+        attrs['name'] = name
         children = []
         id_ = attrs.get("id")
         for i, (code, label) in enumerate(itertools.chain(self.choices, choices)):
