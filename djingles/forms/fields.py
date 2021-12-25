@@ -6,7 +6,10 @@ import mimetypes
 from collections import OrderedDict
 
 from django.db.models.query_utils import Q
-from django.utils.encoding import force_text
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_str as force_text
 import os
 from urllib.request import build_opener
 from urllib.parse import urlparse

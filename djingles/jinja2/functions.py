@@ -1,7 +1,10 @@
 
 import inspect
 from django.forms.formsets import BaseFormSet
-from django.utils.encoding import force_text
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_str as force_text
 from django.utils.safestring import mark_safe
 from djingles.jinja2 import jinja2_function
 from djingles import html

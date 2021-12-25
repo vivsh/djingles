@@ -114,7 +114,7 @@ def get_form_name(form_class_or_obj):
 def auth_login(request,user):
     from django.contrib.auth import login
     user.backend = 'django.contrib.auth.backends.ModelBackend'
-    login(request,user)
+    login(request, user)
     return user
 
 

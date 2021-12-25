@@ -3,7 +3,10 @@ from django import forms
 from collections import deque
 import itertools
 from djingles import html
-from django.utils.encoding import force_text
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_str as force_text
 
 
 class AbstractThemedWidget(object):

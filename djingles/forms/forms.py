@@ -7,7 +7,10 @@ from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
 from django.db.models.fields import CharField, TextField
 from django.http.request import QueryDict
 from django import forms
-from django.utils.encoding import force_text
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_str as force_text
 from djingles.formatters import Formatter
 from djingles.forms.fields import SortField
 from djingles import utils

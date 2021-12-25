@@ -5,7 +5,10 @@ import re
 import jinja2
 from collections import namedtuple
 from django.middleware import csrf
-from django.utils.encoding import force_text
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_str as force_text
 from djingles import utils
 from . import common, links
 
