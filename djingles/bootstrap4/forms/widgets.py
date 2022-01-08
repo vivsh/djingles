@@ -160,7 +160,7 @@ class CheckboxInput(BootstrapWidget, forms.CheckboxInput):
             field.field.widget.attrs['class'] = html.add_css_class(field.field.widget.attrs.get("class", ""), "form-check-input")
             field.field.label = ""
             return html.div(class_="form-check")[
-                html.input(id=field.id_for_label, name=field.html_name, class_="form-check-input", type="checkbox", value=field.value()),
+                field.as_widget(),
                 html.label(class_=self.label_class, for_=field.id_for_label)[
                     field.label
                 ]
