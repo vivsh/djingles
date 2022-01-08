@@ -147,16 +147,20 @@ class CheckboxSelectMultiple(BooleanInputMixin, BootstrapWidget, ChoiceWidgetMix
 
 class CheckboxInput(BootstrapWidget, forms.CheckboxInput):
 
-    field_class = "form-group form-check"
+    field_class = "form-group"
     input_class = ""
+
+    def render_label(self, field):
+        return None
 
     def render_widget(self, field, **kwargs):
         if getattr(field, 'layout', None) == 'inline':
-            return "%s %s" % (self.render_label(field), str(field))
+            return "%s %s" % (str(field),)
         else:
             field.field.widget.attrs['class'] = html.add_css_class(field.field.widget.attrs.get("class", ""), "form-check-input")
-            return html.div(class_="checkbox")[
-                str(field),
+            field.field.label = ""
+            return html.div(class_="form-check")[
+                html.input(id=field.id_for_label, name=field.html_name, class_="form-check-input", type="checkbox", value=field.value()),
                 html.label(class_=self.label_class, for_=field.id_for_label)[
                     field.label
                 ]

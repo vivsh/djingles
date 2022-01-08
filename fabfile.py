@@ -39,7 +39,7 @@ def push(message=None):
 
 
 def pypi():
-    local("rm -rf dist/* && python setup.py sdist bdist_wheel && twine upload dist/*")
+    local("rm -rf dist/* && python3 setup.py sdist bdist_wheel && twine upload dist/*")
 
 
 def publish(message):
