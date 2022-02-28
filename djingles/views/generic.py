@@ -126,7 +126,8 @@ class CommonTemplateView(CommonView, TemplateResponseMixin):
 
     def render_to_response(self, ctx, **response_kwargs):
         ctx.update(self.extra_context)
-        if not self.request.accepts("application/json"):
+        is_ajax = self.request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        if not is_ajax:
             ctx['view'] = self
             ctx.setdefault("messages", self.get_messages())
             ctx.setdefault('page_heading', self.get_page_heading())
