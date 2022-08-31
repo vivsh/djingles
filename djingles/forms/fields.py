@@ -102,6 +102,7 @@ class SortField(forms.ChoiceField):
         super(SortField, self).__init__(choices=choices, **kwargs)
         self.modifier = modifier
         self.toggle = toggle
+        self.values = set()
         self.set_choices(choices)
 
     def __deepcopy__(self, memo):
@@ -118,6 +119,7 @@ class SortField(forms.ChoiceField):
             new_choices.append((position, label))
             field_map[position] = re.sub(r'\s+', ' ', value.strip())
         self.choices = tuple(new_choices)
+        self.values = set(field_map.values())
         self.field_map = field_map
 
     def valid_value(self, value):
@@ -125,7 +127,7 @@ class SortField(forms.ChoiceField):
         text_value = force_text(value)
         if text_value.startswith("-"):
             text_value = text_value[1:]
-        return text_value in self.field_map or super(SortField, self).valid_value(text_value)
+        return text_value in self.field_map or super(SortField, self).valid_value(text_value) or text_value in self.values
 
     def build_links(self, request, bound_field):
         value = bound_field.value()
@@ -149,7 +151,7 @@ class SortField(forms.ChoiceField):
 
     def filter_queryset(self, queryset, key, bound_field):
         neg = key.startswith("-")
-        value = self.field_map[key.lstrip("-")]
+        value = self.field_map[key.lstrip("-")] if key not in self.values else key
         invert = lambda a: self.invert_sign(a, neg)
         values = map(invert, value.split())
         return queryset.order_by(*values)
@@ -179,7 +181,7 @@ class TableSortField(SortField):
         reverse = text_value.startswith("-")
         column_dict = self.column_dict
         name = text_value[1:] if reverse else text_value
-        name = self.field_map[name]
+        name = self.field_map[name] if name not in self.values() else name
         col = column_dict[name]
         if not col.sortable:
             return queryset
