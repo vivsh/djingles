@@ -181,7 +181,7 @@ class TableSortField(SortField):
         reverse = text_value.startswith("-")
         column_dict = self.column_dict
         name = text_value[1:] if reverse else text_value
-        name = self.field_map[name] if name not in self.values() else name
+        name = self.field_map[name] if name not in self.values else name
         col = column_dict[name]
         if not col.sortable:
             return queryset
