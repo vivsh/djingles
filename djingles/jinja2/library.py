@@ -3,6 +3,7 @@ import functools
 import jinja2
 from django.template.loader import render_to_string
 from jinja2.ext import Extension
+from jinja2.utils import markupsafe
 
 from djingles import utils
 
@@ -40,18 +41,18 @@ def jinja2_function(template=None, name=None, takes_context=False, mark_safe=Fal
                 t = get_template(template)
                 ctx = orig_func(*args, **kwargs)
                 result = t.render(ctx)
-                result = jinja2.Markup(result)
+                result = markupsafe.Markup(result)
                 return result
         elif mark_safe:
             def wrapper(*args, **kwargs):
                 result = orig_func(*args, **kwargs)
-                return jinja2.Markup(result)
+                return markupsafe.Markup(result)
 
         if wrapper:
             func = functools.update_wrapper(wrapper, func)
 
         if takes_context:
-            func = jinja2.contextfunction(func)
+            func = jinja2.pass_context(func)
 
         library.functions[name_] = func
         return orig_func
@@ -82,7 +83,7 @@ class Jinja2Function(metaclass=MetaJinja2Function):
         ctx['me'] = self
         template_names = self.get_template_names()
         content = render_to_string(template_names, ctx)
-        return jinja2.Markup(content)
+        return markupsafe.Markup(content)
 
     @classmethod
     def as_function(cls):

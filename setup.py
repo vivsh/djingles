@@ -38,11 +38,9 @@ setup(
     keywords="django utilities",
     install_requires=[
         "python-dateutil",
-        "jinja2>=2.8",
-        "django>=3",
-        "click",
+        "jinja2>=3",
+        "django>=4",
         "djangorestframework",
-        "cookiecutter",
     ],
     python_requires='>=3',
     include_package_data=True,

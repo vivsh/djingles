@@ -1,5 +1,5 @@
 
-from jinja2 import Markup
+from markupsafe import Markup
 from django import forms
 from djingles import html
 from djingles.forms.widgets import AbstractThemedWidget, ChoiceWidgetMixin

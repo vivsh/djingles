@@ -6,7 +6,7 @@ except ImportError:
 from django.forms.models import ModelChoiceIteratorValue
 import re
 import json
-from jinja2 import Markup
+from jinja2.utils import markupsafe
 
 
 __all__ = ['html_json', 'html_attrs', "Element", "CssClassList", "CssStyle", 'add_css_class', 'empty']
@@ -14,7 +14,7 @@ __all__ = ['html_json', 'html_attrs', "Element", "CssClassList", "CssStyle", 'ad
 
 def html_json(values):
     content = json.dumps(values)
-    return Markup(content)
+    return markupsafe.Markup(content)
 
 
 def html_attrs(*args, **kwargs):

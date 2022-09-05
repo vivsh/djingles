@@ -1,7 +1,7 @@
 
 from contextlib import contextmanager
 import os
-from fabric.api import local, run, env, cd, settings, prefix, lcd
+from fabric import task
 
 BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 
@@ -18,30 +18,32 @@ def relative_path(*args):
     return os.path.join(BASE_DIR, *args)
 
 
-def freeze():
-    packages = local("pip freeze", capture=True)
+@task
+def freeze(c):
+    packages = c.run("pip freeze").stdout
     with open(relative_path("requirements.txt"), "w") as fr, \
             open(relative_path("dev_requirements.txt"), "w") as fd:
         for line in packages.splitlines(True):
             name = line.strip().split("=", 1)[0]
             fh = fd if name in DEVELOPMENT_PACKAGES else fr
             fh.write(line)
-    local("git commit -m 'updated requirements' requirements.txt dev_requirements.txt")
+    c.run("git commit -m 'updated requirements' requirements.txt dev_requirements.txt", warn=True)
 
 
-def push(message=None):
-    local("git add . --all")
+@task
+def push(c, message=""):
+    c.run("git add . --all")
     if message:
-        with settings(warn_only=True):
-            local("git commit -am '%s'" % message)
-            # freeze()
-    local("git push origin master")
+        c.run("git commit -am '%s'" % message)
+    c.run("git push origin master")
 
 
-def pypi():
-    local("rm -rf dist/* && python3 setup.py sdist bdist_wheel && twine upload dist/*")
+@task
+def pypi(c):
+    c.run("rm -rf dist/* && python3 setup.py sdist bdist_wheel && twine upload dist/*")
 
 
-def publish(message):
-    push(message)
-    pypi()
+@task
+def publish(c, message=""):
+    push(c, message)
+    pypi(c)

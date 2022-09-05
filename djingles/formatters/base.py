@@ -1,10 +1,10 @@
 
-from jinja2 import Markup
 import inspect
 import copy
 from collections import OrderedDict, deque
 
 from djingles.html import Link
+from markupsafe import Markup
 from django.utils.formats import localize
 from djingles.utils import url_query_update, flatten
 
